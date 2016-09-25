@@ -2,7 +2,7 @@ macro_rules! declare_struct_and_builder {
     // Implement struct and builder when all attributes have been filtered
     (
         meta: [ $( #[$STRUCT_META:meta] )* ],
-        declaration: $BUILDER:ident => $STRUCT:ident
+        spec: $BUILDER:ident => $STRUCT:ident
     )
     =>
     {
@@ -20,29 +20,26 @@ macro_rules! parse_item {
     // https://github.com/rust-lang-nursery/lazy-static.rs/blob/v0.2.1/src/lib.rs
 
     (
-        $callback:ident,
         meta: [ $( #[$ITEM_META:meta] )* ],
-        declaration: #[$NEXT_META:meta] $( $STRUCT_DEC:tt )+
+        spec: #[$NEXT_META:meta] $( $SPEC:tt )+
     )
     =>
     {
         parse_item! {
-            $callback,
             meta: [ #[$NEXT_META] $( #[$ITEM_META] )* ],
-            declaration: $( $STRUCT_DEC )+
+            spec: $( $SPEC )+
         }
     };
 
     (
-        $callback:ident,
         meta: [ $( #[$ITEM_META:meta] )* ],
-        declaration: $BUILDER:ident => $STRUCT:ident
+        spec: $BUILDER:ident => $STRUCT:ident $BODY:block
     )
     =>
     {
-        $callback! {
+        declare_struct_and_builder! {
             meta: [ $( #[$ITEM_META] )* ],
-            declaration: $BUILDER => $STRUCT
+            spec: $BUILDER => $STRUCT
         }
     };
 }
@@ -52,27 +49,35 @@ macro_rules! builder {
     // https://github.com/rust-lang-nursery/lazy-static.rs/blob/v0.2.1/src/lib.rs
 
     (
-        $( $STRUCT_DEC:tt )*
+        $( $SPEC:tt )*
         // fields: { $( $FIELD_DEC:tt )* } $(,)*
         // $( assertions: { $( $ASSERTION:expr ),* $(,)* } )*
     )
     =>
     {
         parse_item! {
-            declare_struct_and_builder,
             meta: [],
-            declaration: $( $STRUCT_DEC )*
+            spec: $( $SPEC )*
         }
     };
 }
 
 fn main() {
     builder! {
-        OneBuilder => One
+        OneBuilder => One {}
+    }
+
+    builder! {
+        TwoBuilder => Two {
+            something: i32 = Some(0)
+        }
     }
 
     builder! {
         /// hello everyone
-        MyStructBuilder => MyStruct
+        MyStructBuilder => MyStruct {
+            /// doc for i32
+            something: i32 = Some(0)
+        }
     }
 }
