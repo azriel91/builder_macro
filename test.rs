@@ -11,6 +11,7 @@ macro_rules! declare_struct_and_builder {
                 } $(,)*
             )*
         }
+        $(, assertions: { $( $ASSERTION:expr; )* } )*
     )
     =>
     {
@@ -24,7 +25,43 @@ macro_rules! declare_struct_and_builder {
 
         // stringify!($STRUCT)
         #[doc="Generated struct builder"]
-        struct $BUILDER {}
+        struct $BUILDER {
+            $(
+                $( #[$F_META] )*
+                $F_NAME : Option<$F_TY>,
+            )*
+        }
+
+        impl $BUILDER {
+            /// Construct the builder
+            pub fn new() -> $BUILDER {
+                $BUILDER {
+                    $(
+                        $F_NAME : $F_DEFAULT
+                    ),*
+                }
+            }
+
+            /// Build the struct
+            pub fn build(self) -> $STRUCT {
+                $( let $F_NAME = self.$F_NAME.unwrap(); )*
+                $( $( $ASSERTION; )* )*
+
+                $STRUCT {
+                    $( $F_NAME : $F_NAME ),*
+                }
+            }
+
+            $(
+                // allow dead code because the user may be using the field default
+                #[allow(dead_code)]
+                /// Specify a value for the $F_NAME field
+                fn $F_NAME(mut self, value: $F_TY) -> Self {
+                    self.$F_NAME = Some(value);
+                    self
+                }
+            )*
+        }
     };
 }
 
@@ -64,6 +101,7 @@ macro_rules! parse_item {
         spec: $BUILDER:ident => $STRUCT:ident {
             $( $FIELD_SPEC:tt )*
         }
+        $(, assertions: { $( $ASSERTION:expr; )* } )*
     )
     =>
     {
@@ -73,6 +111,7 @@ macro_rules! parse_item {
             fields: {},
             field_wip: { meta: [] },
             parser_wip: { $( $FIELD_SPEC )* }
+            $(, assertions: { $( $ASSERTION; )* } )*
         }
     };
 
@@ -93,8 +132,9 @@ macro_rules! parse_item {
             meta: [ $( #[$FIELD_WIP_META:meta] )* ]
         },
         parser_wip: {
-            #[$FIELD_WIP_NEXT_META:meta] $( $FIELD_TAIL:tt )+
+            #[$FIELD_WIP_NEXT_META:meta] $( $SPEC_TAIL:tt )+
         }
+        $(, assertions: { $( $ASSERTION:expr; )* } )*
     )
     =>
     {
@@ -113,8 +153,9 @@ macro_rules! parse_item {
                 meta: [ $( #[$FIELD_WIP_META] )* #[$FIELD_WIP_NEXT_META] ]
             },
             parser_wip: {
-                $( $FIELD_TAIL )+
+                $( $SPEC_TAIL )+
             }
+            $(, assertions: { $( $ASSERTION; )* } )*
         }
     };
 
@@ -136,8 +177,9 @@ macro_rules! parse_item {
         },
         parser_wip: {
             $F_NAME:ident: $F_TY:ty = $F_DEFAULT:expr,
-            $( $FIELD_TAIL:tt )*
+            $( $SPEC_TAIL:tt )*
         }
+        $(, assertions: { $( $ASSERTION:expr; )* } )*
     )
     =>
     {
@@ -158,8 +200,9 @@ macro_rules! parse_item {
             },
             field_wip: { meta: [] },
             parser_wip: {
-                $( $FIELD_TAIL )*
+                $( $SPEC_TAIL )*
             }
+            $(, assertions: { $( $ASSERTION; )* } )*
         }
     };
 
@@ -176,6 +219,7 @@ macro_rules! parse_item {
         },
         field_wip: { meta: [] },
         parser_wip: {}
+        $(, assertions: { $( $ASSERTION:expr; )* } )*
     )
     =>
     {
@@ -190,6 +234,7 @@ macro_rules! parse_item {
                     },
                 )*
             }
+            $(, assertions: { $( $ASSERTION; )* } )*
         }
     };
 }
@@ -200,7 +245,6 @@ macro_rules! builder {
 
     (
         $( $SPEC:tt )*
-        // $( assertions: { $( $ASSERTION:expr ),* $(,)* } )*
     )
     =>
     {
@@ -239,9 +283,22 @@ fn main() {
 
     builder! {
         /// hello everyone
-        MyStructBuilder => MyStruct {
+        FiveBuilder => Five {
             /// doc for i32
             something: i32 = Some(0),
         }
     }
+
+    builder! {
+        /// hello everyone
+        SixBuilder => Six {
+            /// doc for i32
+            something: i32 = Some(0),
+        },
+        assertions: {
+            assert!(something > -1);
+        }
+    }
+
+    SixBuilder::new().build();
 }
