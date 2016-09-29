@@ -1,0 +1,5 @@
+[package]
+name = "builder_macro"
+version = "0.1.0"
+authors = ["Azriel Hoh <azriel91@gmail.com>"]
+description = "A macro to generate structs and a corresponding builder"
