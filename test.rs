@@ -1,11 +1,13 @@
 macro_rules! declare_struct_and_builder {
     // Implement struct and builder when all attributes have been filtered
     (
+        vis: [ $( $VIS:ident )* ],
         meta: [ $( #[$META:meta] )* ],
         spec: $BUILDER:ident => $STRUCT:ident,
         fields: {
             $(
                 {
+                    vis: [ $( $FIELD_VIS:ident )* ],
                     meta: [ $( #[$F_META:meta] )* ],
                     spec: $F_NAME:ident: $F_TY:ty = $F_DEFAULT:expr
                 } $(,)*
@@ -16,16 +18,17 @@ macro_rules! declare_struct_and_builder {
     =>
     {
         $( #[$META] )*
-        struct $STRUCT {
+        $( $VIS )* struct $STRUCT {
             $(
                 $( #[$F_META] )*
-                $F_NAME : $F_TY,
+                $( $FIELD_VIS )* $F_NAME : $F_TY,
             )*
         }
 
         // stringify!($STRUCT)
         #[doc="Generated struct builder"]
-        struct $BUILDER {
+        $( $VIS )* struct $BUILDER {
+            // builder fields shouldn't have to be visible
             $(
                 $( #[$F_META] )*
                 $F_NAME : Option<$F_TY>,
@@ -95,7 +98,7 @@ macro_rules! parse_item {
     // a_macro!($something, parse_item!($another_thing)); // fails because it doesn't attempt to evaluate parse_item!
     //
 
-    // This macro adds 'fields:' around the block to make parsing easier
+    // This macro adds additional blocks to make parsing easier
     (
         meta: [ $( #[$ITEM_META:meta] )* ],
         spec: $BUILDER:ident => $STRUCT:ident {
@@ -106,6 +109,27 @@ macro_rules! parse_item {
     =>
     {
         parse_item! {
+            vis: [],
+            meta: [ $( #[$ITEM_META] )* ],
+            spec: $BUILDER => $STRUCT,
+            fields: {},
+            field_wip: { meta: [] },
+            parser_wip: { $( $FIELD_SPEC )* }
+            $(, assertions: { $( $ASSERTION; )* } )*
+        }
+    };
+    // We match on 'pub' in case the struct and builder should be public
+    (
+        meta: [ $( #[$ITEM_META:meta] )* ],
+        spec: pub $BUILDER:ident => $STRUCT:ident {
+            $( $FIELD_SPEC:tt )*
+        }
+        $(, assertions: { $( $ASSERTION:expr; )* } )*
+    )
+    =>
+    {
+        parse_item! {
+            vis: [ pub ],
             meta: [ $( #[$ITEM_META] )* ],
             spec: $BUILDER => $STRUCT,
             fields: {},
@@ -118,11 +142,13 @@ macro_rules! parse_item {
     // Now we have to attempt to wrap each field inside braces {}
     // This macro looks for meta tokens and extracts them into field_wip
     (
+        vis: [ $( $VIS:ident )* ],
         meta: [ $( #[$ITEM_META:meta] )* ],
         spec: $BUILDER:ident => $STRUCT:ident,
         fields: {
             $(
                 {
+                    vis: [ $( $FIELD_VIS:ident )* ],
                     meta: [ $( #[$FIELD_META:meta] )* ],
                     spec: $( $FIELD_SPEC:tt )+
                 },
@@ -139,11 +165,13 @@ macro_rules! parse_item {
     =>
     {
         parse_item! {
+            vis: [ $( $VIS )* ],
             meta: [ $( #[$ITEM_META] )* ],
             spec: $BUILDER => $STRUCT,
             fields: {
                 $(
                     {
+                        vis: [ $( $FIELD_VIS )* ],
                         meta: [ $( #[$FIELD_META] )* ],
                         spec: $( $FIELD_SPEC )+
                     },
@@ -160,13 +188,15 @@ macro_rules! parse_item {
     };
 
     // When we reach here, the meta tokens for field_wip should have all been parsed
-    // Therefore we should be able to match on the field_name: Type = Some(default), pattern
+    // Therefore we should be able to match on the [pub] field_name: Type = Some(default), pattern
     (
+        vis: [ $( $VIS:ident )* ],
         meta: [ $( #[$ITEM_META:meta] )* ],
         spec: $BUILDER:ident => $STRUCT:ident,
         fields: {
             $(
                 {
+                    vis: [ $( $FIELD_VIS:ident )* ],
                     meta: [ $( #[$FIELD_META:meta] )* ],
                     spec: $( $FIELD_SPEC:tt )+
                 },
@@ -184,16 +214,69 @@ macro_rules! parse_item {
     =>
     {
         parse_item! {
+            vis: [ $( $VIS )* ],
             meta: [ $( #[$ITEM_META] )* ],
             spec: $BUILDER => $STRUCT,
             fields: {
                 $(
                     {
+                        vis: [ $( $FIELD_VIS )* ],
                         meta: [ $( #[$FIELD_META] )* ],
                         spec: $( $FIELD_SPEC )+
                     },
                 )*
                 {
+                    vis: [],
+                    meta: [ $( #[$FIELD_WIP_META] )* ],
+                    spec: $F_NAME: $F_TY = $F_DEFAULT
+                },
+            },
+            field_wip: { meta: [] },
+            parser_wip: {
+                $( $SPEC_TAIL )*
+            }
+            $(, assertions: { $( $ASSERTION; )* } )*
+        }
+    };
+    // public field
+    (
+        vis: [ $( $VIS:ident )* ],
+        meta: [ $( #[$ITEM_META:meta] )* ],
+        spec: $BUILDER:ident => $STRUCT:ident,
+        fields: {
+            $(
+                {
+                    vis: [ $( $FIELD_VIS:ident )* ],
+                    meta: [ $( #[$FIELD_META:meta] )* ],
+                    spec: $( $FIELD_SPEC:tt )+
+                },
+            )*
+        },
+        field_wip: {
+            meta: [ $( #[$FIELD_WIP_META:meta] )* ]
+        },
+        parser_wip: {
+            pub $F_NAME:ident: $F_TY:ty = $F_DEFAULT:expr,
+            $( $SPEC_TAIL:tt )*
+        }
+        $(, assertions: { $( $ASSERTION:expr; )* } )*
+    )
+    =>
+    {
+        parse_item! {
+            vis: [ $( $VIS )* ],
+            meta: [ $( #[$ITEM_META] )* ],
+            spec: $BUILDER => $STRUCT,
+            fields: {
+                $(
+                    {
+                        vis: [ $( $FIELD_VIS )* ],
+                        meta: [ $( #[$FIELD_META] )* ],
+                        spec: $( $FIELD_SPEC )+
+                    },
+                )*
+                {
+                    vis: [ pub ],
                     meta: [ $( #[$FIELD_WIP_META] )* ],
                     spec: $F_NAME: $F_TY = $F_DEFAULT
                 },
@@ -207,11 +290,13 @@ macro_rules! parse_item {
     };
 
     (
+        vis: [ $( $VIS:ident )* ],
         meta: [ $( #[$ITEM_META:meta] )* ],
         spec: $BUILDER:ident => $STRUCT:ident,
         fields: {
             $(
                 {
+                    vis: [ $( $FIELD_VIS:ident )* ],
                     meta: [ $( #[$FIELD_META:meta] )* ],
                     spec: $F_NAME:ident: $F_TY:ty = $F_DEFAULT:expr $(,)*
                 } $(,)*
@@ -224,11 +309,13 @@ macro_rules! parse_item {
     =>
     {
         declare_struct_and_builder! {
+            vis: [ $( $VIS )* ],
             meta: [ $( #[$ITEM_META] )* ],
             spec: $BUILDER => $STRUCT,
             fields: {
                 $(
                     {
+                        vis: [ $( $FIELD_VIS )* ],
                         meta: [ $( #[$FIELD_META] )* ],
                         spec: $F_NAME: $F_TY = $F_DEFAULT
                     },
@@ -289,6 +376,7 @@ fn main() {
         }
     }
 
+    // test assertions
     builder! {
         /// hello everyone
         SixBuilder => Six {
@@ -300,5 +388,36 @@ fn main() {
         }
     }
 
-    SixBuilder::new().build();
+    SixBuilder::new().something(1).build();
+
+    builder! {
+        /// hello everyone
+        pub SevenBuilder => Seven {
+            /// doc for i32
+            something: i32 = Some(0),
+            something_else: i32 = Some(99),
+        },
+        assertions: {
+            assert!(something > -1);
+            assert!(something < 100);
+        }
+    }
+
+    builder! {
+        /// hello everyone
+        pub EightBuilder => Eight {
+            pub something: i32 = Some(0),
+            /// public field with docs
+            pub something_more: i32 = Some(0),
+            something_else: i32 = Some(99),
+            // private field with docs
+            something_elsemore: i32 = Some(99),
+        },
+        assertions: {
+            assert!(something > -1);
+            assert!(something_more > -1);
+            assert!(something_else > -1);
+            assert!(something_elsemore > -1);
+        }
+    }
 }
