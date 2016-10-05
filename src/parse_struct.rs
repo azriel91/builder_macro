@@ -32,29 +32,10 @@ macro_rules! parse_struct {
     //
 
     // This macro adds additional blocks to make parsing easier
-    (
-        meta: [ $( #[$ITEM_META:meta] )* ],
-        spec: $BUILDER:ident => $STRUCT:ident {
-            $( $FIELD_SPEC:tt )*
-        }
-        $(, assertions: { $( $ASSERTION:expr; )* } )*
-    )
-    =>
-    {
-        parse_struct! {
-            vis: [],
-            meta: [ $( #[$ITEM_META] )* ],
-            spec: $BUILDER => $STRUCT,
-            fields: {},
-            field_wip: { meta: [] },
-            parser_wip: { $( $FIELD_SPEC )* }
-            $(, assertions: { $( $ASSERTION; )* } )*
-        }
-    };
     // We match on 'pub' in case the struct and builder should be public
     (
         meta: [ $( #[$ITEM_META:meta] )* ],
-        spec: pub $BUILDER:ident => $STRUCT:ident {
+        spec: pub $BUILDER:ident $MODE:tt $STRUCT:ident {
             $( $FIELD_SPEC:tt )*
         }
         $(, assertions: { $( $ASSERTION:expr; )* } )*
@@ -64,7 +45,32 @@ macro_rules! parse_struct {
         parse_struct! {
             vis: [ pub ],
             meta: [ $( #[$ITEM_META] )* ],
-            spec: $BUILDER => $STRUCT,
+            spec: $BUILDER $MODE $STRUCT,
+            fields: {},
+            field_wip: { meta: [] },
+            parser_wip: { $( $FIELD_SPEC )* }
+            $(, assertions: { $( $ASSERTION; )* } )*
+        }
+    };
+    // We must have the private scope match happen after the rule for pub scope.
+    // This is because if we have it the other way around, the following happens:
+    //
+    // * $BUILDER:ident matches `pub`
+    // * $MODE:tt matches the builder name
+    // * $STRUCT:ident attempts to match the -> or => arrow and fails
+    (
+        meta: [ $( #[$ITEM_META:meta] )* ],
+        spec: $BUILDER:ident $MODE:tt $STRUCT:ident {
+            $( $FIELD_SPEC:tt )*
+        }
+        $(, assertions: { $( $ASSERTION:expr; )* } )*
+    )
+    =>
+    {
+        parse_struct! {
+            vis: [],
+            meta: [ $( #[$ITEM_META] )* ],
+            spec: $BUILDER $MODE $STRUCT,
             fields: {},
             field_wip: { meta: [] },
             parser_wip: { $( $FIELD_SPEC )* }
@@ -77,7 +83,7 @@ macro_rules! parse_struct {
     (
         vis: [ $( $VIS:ident )* ],
         meta: [ $( #[$ITEM_META:meta] )* ],
-        spec: $BUILDER:ident => $STRUCT:ident,
+        spec: $BUILDER:ident $MODE:tt $STRUCT:ident,
         fields: {
             $(
                 {
@@ -100,7 +106,7 @@ macro_rules! parse_struct {
         parse_struct! {
             vis: [ $( $VIS )* ],
             meta: [ $( #[$ITEM_META] )* ],
-            spec: $BUILDER => $STRUCT,
+            spec: $BUILDER $MODE $STRUCT,
             fields: {
                 $(
                     {
@@ -125,7 +131,7 @@ macro_rules! parse_struct {
     (
         vis: [ $( $VIS:ident )* ],
         meta: [ $( #[$ITEM_META:meta] )* ],
-        spec: $BUILDER:ident => $STRUCT:ident,
+        spec: $BUILDER:ident $MODE:tt $STRUCT:ident,
         fields: {
             $(
                 {
@@ -149,7 +155,7 @@ macro_rules! parse_struct {
         parse_struct! {
             vis: [ $( $VIS )* ],
             meta: [ $( #[$ITEM_META] )* ],
-            spec: $BUILDER => $STRUCT,
+            spec: $BUILDER $MODE $STRUCT,
             fields: {
                 $(
                     {
@@ -175,7 +181,7 @@ macro_rules! parse_struct {
     (
         vis: [ $( $VIS:ident )* ],
         meta: [ $( #[$ITEM_META:meta] )* ],
-        spec: $BUILDER:ident => $STRUCT:ident,
+        spec: $BUILDER:ident $MODE:tt $STRUCT:ident,
         fields: {
             $(
                 {
@@ -199,7 +205,7 @@ macro_rules! parse_struct {
         parse_struct! {
             vis: [ $( $VIS )* ],
             meta: [ $( #[$ITEM_META] )* ],
-            spec: $BUILDER => $STRUCT,
+            spec: $BUILDER $MODE $STRUCT,
             fields: {
                 $(
                     {
@@ -225,7 +231,7 @@ macro_rules! parse_struct {
     (
         vis: [ $( $VIS:ident )* ],
         meta: [ $( #[$ITEM_META:meta] )* ],
-        spec: $BUILDER:ident => $STRUCT:ident,
+        spec: $BUILDER:ident $MODE:tt $STRUCT:ident,
         fields: {
             $(
                 {
@@ -244,7 +250,7 @@ macro_rules! parse_struct {
         declare_struct_and_builder! {
             vis: [ $( $VIS )* ],
             meta: [ $( #[$ITEM_META] )* ],
-            spec: $BUILDER => $STRUCT,
+            spec: $BUILDER $MODE $STRUCT,
             fields: {
                 $(
                     {

@@ -132,7 +132,7 @@ macro_rules! builder {
 mod test {
     #[test]
     fn generates_struct_and_builder_with_defaults() {
-        builder!(MyStructBuilder => MyStruct {
+        builder!(MyStructBuilder -> MyStruct {
             field_i32: i32 = Some(123),
             field_str: &'static str = Some("abc"),
         });
@@ -144,7 +144,7 @@ mod test {
 
     #[test]
     fn generates_struct_and_builder_with_parameters() {
-        builder!(MyStructBuilder => MyStruct {
+        builder!(MyStructBuilder -> MyStruct {
             field_i32: i32 = Some(123),
             field_str: &'static str = Some("abc"),
         });
@@ -159,7 +159,7 @@ mod test {
 
     #[test]
     fn generates_struct_and_builder_with_generic_types() {
-        builder!(MyStructBuilder => MyStruct {
+        builder!(MyStructBuilder -> MyStruct {
             field_vec: Vec<i32> = Some(vec![123]),
         });
 
@@ -183,6 +183,8 @@ mod test {
                 self.value
             }
         }
+
+        // Note: we use => instead of -> for the consuming variant of the builder
         builder!(MyStructBuilder => MyStruct {
             field_trait: Box<Magic> = Some(Box::new(Dust { value: 1 })),
             field_vec: Vec<Box<Magic>> = Some(vec![Box::new(Dust { value: 2 })]),
@@ -197,7 +199,7 @@ mod test {
     #[test]
     #[should_panic(expected = "assertion failed")]
     fn generated_build_method_uses_assertions() {
-        builder!(MyStructBuilder => MyStruct {
+        builder!(MyStructBuilder -> MyStruct {
             field_i32: i32 = Some(123),
         },
         assertions: {
@@ -211,11 +213,11 @@ mod test {
     }
 
     mod visibility_test {
-        builder!(OuterStructBuilder => OuterStruct { field_i32: i32 = Some(1), });
+        builder!(OuterStructBuilder -> OuterStruct { field_i32: i32 = Some(1), });
 
         mod inner {
-            builder!(MyStructBuilder => MyStruct { field_i32: i32 = Some(1), });
-            builder!(pub InnerStructBuilder => InnerStruct { pub field_i32: i32 = Some(1), });
+            builder!(MyStructBuilder -> MyStruct { field_i32: i32 = Some(1), });
+            builder!(pub InnerStructBuilder -> InnerStruct { pub field_i32: i32 = Some(1), });
 
             #[test]
             fn can_access_private_struct_from_within_module() {
