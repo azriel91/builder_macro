@@ -14,15 +14,68 @@
 //! # fn main() {} // necessary to allow doc test to pass
 //! ```
 //!
-//! The simplest usage format of the builder macro is:
+//! # Examples
+//!
+//! ## Non-consuming Builder
+//!
+//! The simplest usage of the builder macro to generate a [non-consuming builder][2] is:
 //!
 //! ```rust,ignore
-//! builder!(BuilderName => StructName {
+//! builder!(BuilderName -> StructName {
 //!     fieldname: Type = Some(default_value), // or None if there is no sensible default
 //! });
 //! ```
 //!
-//! The above will generate a module private struct and builder with a single private field.
+//! The above will generate a module private struct and a non-consuming builder with a single private field.
+//!
+//! For example, given the following declaration:
+//!
+//! ```rust
+//! # #[macro_use]
+//! # extern crate builder_macro;
+//! #
+//! # fn main() {
+//! builder!(BuilderName -> StructName {
+//!     value: i32 = Some(1),
+//! });
+//! # }
+//! ```
+//!
+//! The generated builder and struct will be:
+//!
+//! ```rust
+//! # #[macro_use]
+//! # extern crate builder_macro;
+//! #
+//! # fn main() {
+//! struct StructName {
+//!     value: i32,
+//! }
+//!
+//! #[doc = "Generated struct builder"]
+//! struct BuilderName {
+//!     value: Option<i32>,
+//! }
+//!
+//! impl BuilderName {
+//!     /// Construct the builder
+//!     pub fn new() -> BuilderName { BuilderName { value: Some(1), } }
+//!
+//!     /// Build the struct
+//!     pub fn build(&self) -> StructName {
+//!         let value = self.value.clone().unwrap();
+//!         StructName{value: value,}
+//!     }
+//!
+//!     #[allow(dead_code)]
+//!     /// Specify a value for the $F_NAME field
+//!     pub fn value(&mut self, value: i32) -> &mut Self {
+//!         self.value = Some(value);
+//!         self
+//!     }
+//! }
+//! # }
+//! ```
 //!
 //! The full macro usage format is:
 //!
@@ -36,7 +89,7 @@
 //!     builder! {
 //!         /// StructName is an example struct.
 //!         /// These docs are copied over to the generated struct.
-//!         pub BuilderName => StructName {
+//!         pub BuilderName -> StructName {
 //!             /// a_field is an i32 which must be between 0 and 100 inclusive
 //!             // the trailing comma is mandatory due to how the macro is parsed
 //!             pub a_field: i32 = Some(50),
@@ -61,7 +114,42 @@
 //! # }
 //! ```
 //!
-//! # Examples
+//! ## Consuming Builder
+//!
+//! To generate a [consuming builder][3], instead of using `->`, use `=>` between the builder name and the target struct
+//! name.
+//!
+//! ```rust
+//! # #[macro_use]
+//! # extern crate builder_macro;
+//! #
+//! # fn main() {
+//! trait Magic {
+//!     fn abracadabra(&mut self) -> i32;
+//! }
+//! struct Dust {
+//!     value: i32,
+//! };
+//! impl Magic for Dust {
+//!     fn abracadabra(&mut self) -> i32 {
+//!         self.value
+//!     }
+//! }
+//!
+//! // Note: we use => instead of -> for the consuming variant of the builder
+//! builder!(MyStructBuilder => MyStruct {
+//!     field_trait: Box<Magic> = Some(Box::new(Dust { value: 1 })),
+//!     field_vec: Vec<Box<Magic>> = Some(vec![Box::new(Dust { value: 2 })]),
+//! });
+//!
+//! let mut my_struct = MyStructBuilder::new().build();
+//!
+//! assert_eq!(my_struct.field_trait.abracadabra(), 1);
+//! assert_eq!(my_struct.field_vec[0].abracadabra(), 2);
+//! # }
+//! ```
+//!
+//! ## Visibility
 //!
 //! Generate a builder and struct with module private visibility:
 //!
@@ -70,7 +158,7 @@
 //! # extern crate builder_macro;
 //! #
 //! # fn main() {
-//! builder!(MyStructBuilder => MyStruct {
+//! builder!(MyStructBuilder -> MyStruct {
 //!     field_i32: i32 = Some(123),
 //!     field_str: &'static str = Some("abc"),
 //! });
@@ -91,7 +179,7 @@
 //! #
 //! # fn main() {
 //! mod inner {
-//!     builder!(pub MyStructBuilder => MyStruct {
+//!     builder!(pub MyStructBuilder -> MyStruct {
 //!         pub field_i32: i32 = Some(123),
 //!         field_str: &'static str = Some("abc"),
 //!     });
@@ -108,6 +196,8 @@
 //! ```
 //!
 //! [1]: http://jadpole.github.io/rust/builder-macro
+//! [2]: https://doc.rust-lang.org/style/ownership/builders.html#non-consuming-builders-preferred
+//! [3]: https://doc.rust-lang.org/style/ownership/builders.html#consuming-builders
 //!
 
 #[macro_use]
@@ -132,7 +222,7 @@ macro_rules! builder {
 mod test {
     #[test]
     fn generates_struct_and_builder_with_defaults() {
-        builder!(MyStructBuilder => MyStruct {
+        builder!(MyStructBuilder -> MyStruct {
             field_i32: i32 = Some(123),
             field_str: &'static str = Some("abc"),
         });
@@ -144,7 +234,7 @@ mod test {
 
     #[test]
     fn generates_struct_and_builder_with_parameters() {
-        builder!(MyStructBuilder => MyStruct {
+        builder!(MyStructBuilder -> MyStruct {
             field_i32: i32 = Some(123),
             field_str: &'static str = Some("abc"),
         });
@@ -159,7 +249,7 @@ mod test {
 
     #[test]
     fn generates_struct_and_builder_with_generic_types() {
-        builder!(MyStructBuilder => MyStruct {
+        builder!(MyStructBuilder -> MyStruct {
             field_vec: Vec<i32> = Some(vec![123]),
         });
 
@@ -183,6 +273,8 @@ mod test {
                 self.value
             }
         }
+
+        // Note: we use => instead of -> for the consuming variant of the builder
         builder!(MyStructBuilder => MyStruct {
             field_trait: Box<Magic> = Some(Box::new(Dust { value: 1 })),
             field_vec: Vec<Box<Magic>> = Some(vec![Box::new(Dust { value: 2 })]),
@@ -197,7 +289,7 @@ mod test {
     #[test]
     #[should_panic(expected = "assertion failed")]
     fn generated_build_method_uses_assertions() {
-        builder!(MyStructBuilder => MyStruct {
+        builder!(MyStructBuilder -> MyStruct {
             field_i32: i32 = Some(123),
         },
         assertions: {
@@ -211,11 +303,11 @@ mod test {
     }
 
     mod visibility_test {
-        builder!(OuterStructBuilder => OuterStruct { field_i32: i32 = Some(1), });
+        builder!(OuterStructBuilder -> OuterStruct { field_i32: i32 = Some(1), });
 
         mod inner {
-            builder!(MyStructBuilder => MyStruct { field_i32: i32 = Some(1), });
-            builder!(pub InnerStructBuilder => InnerStruct { pub field_i32: i32 = Some(1), });
+            builder!(MyStructBuilder -> MyStruct { field_i32: i32 = Some(1), });
+            builder!(pub InnerStructBuilder -> InnerStruct { pub field_i32: i32 = Some(1), });
 
             #[test]
             fn can_access_private_struct_from_within_module() {
