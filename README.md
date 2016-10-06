@@ -1,5 +1,7 @@
 # Builder Macro
 
+[![Crates.io](https://img.shields.io/crates/v/builder_macro.svg)](https://crates.io/crates/builder_macro)
+
 This crate contains a `builder!` macro to declare a struct and a corresponding builder.
 
 The macro is inspired from [jadpole/builder-macro][1], and is designed to
