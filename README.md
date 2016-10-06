@@ -163,6 +163,10 @@ assert_eq!(my_struct.field_i32, 456);
 // assert_eq!(my_struct.field_str, "abc");
 ```
 
+# License
+
+The MIT License
+
 [1]: http://jadpole.github.io/rust/builder-macro
 [2]: https://doc.rust-lang.org/style/ownership/builders.html#non-consuming-builders-preferred
 [3]: https://doc.rust-lang.org/style/ownership/builders.html#consuming-builders
