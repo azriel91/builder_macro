@@ -1,6 +1,8 @@
 # Builder Macro
 
 [![Crates.io](https://img.shields.io/crates/v/builder_macro.svg)](https://crates.io/crates/builder_macro)
+[![Build Status](https://travis-ci.org/azriel91/builder_macro.svg?branch=master)](https://travis-ci.org/azriel91/builder_macro)
+[![Coverage Status](https://coveralls.io/repos/github/azriel91/builder_macro/badge.svg?branch=master)](https://coveralls.io/github/azriel91/builder_macro?branch=master)
 
 This crate contains a `builder!` macro to declare a struct and a corresponding builder.
 
