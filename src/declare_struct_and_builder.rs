@@ -59,7 +59,7 @@ macro_rules! declare_struct_and_builder {
             $(
                 // allow dead code because the user may be using the field default
                 #[allow(dead_code)]
-                /// Specify a value for the $F_NAME field
+                /// Auto-generated setter
                 pub fn $F_NAME(&mut self, value: $F_TY) -> &mut Self {
                     self.$F_NAME = Some(value);
                     self
@@ -125,7 +125,7 @@ macro_rules! declare_struct_and_builder {
             $(
                 // allow dead code because the user may be using the field default
                 #[allow(dead_code)]
-                /// Specify a value for the $F_NAME field
+                /// Auto-generated setter
                 pub fn $F_NAME(mut self, value: $F_TY) -> Self {
                     self.$F_NAME = Some(value);
                     self
