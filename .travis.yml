@@ -1,5 +1,12 @@
 sudo: false
+
+# test on both linux and osx
+os:
+  - linux
+  - osx
+
 language: rust
+
 # necessary for `travis-cargo coveralls --no-sudo`
 addons:
   apt:
@@ -18,6 +25,7 @@ rust:
 # load travis-cargo
 before_script:
   - |
+      export PYTHONUSERBASE=$HOME/.local &&
       pip install 'travis-cargo<0.2' --user &&
       export PATH=$HOME/.local/bin:$PATH
 
