@@ -261,7 +261,7 @@ mod test {
     }
 
     #[test]
-    fn generates_struct_and_builder_with_traits() {
+    fn generates_struct_and_builder_with_traits_using_default_values() {
         trait Magic {
             fn abracadabra(&mut self) -> i32;
         }
@@ -281,6 +281,35 @@ mod test {
         });
 
         let mut my_struct = MyStructBuilder::new().build();
+
+        assert_eq!(my_struct.field_trait.abracadabra(), 1);
+        assert_eq!(my_struct.field_vec[0].abracadabra(), 2);
+    }
+
+    #[test]
+    fn generates_struct_and_builder_with_traits_specifying_parameters() {
+        trait Magic {
+            fn abracadabra(&mut self) -> i32;
+        }
+        struct Dust {
+            value: i32,
+        };
+        impl Magic for Dust {
+            fn abracadabra(&mut self) -> i32 {
+                self.value
+            }
+        }
+
+        // Note: we use => instead of -> for the consuming variant of the builder
+        builder!(MyStructBuilder => MyStruct {
+            field_trait: Box<Magic> = None,
+            field_vec: Vec<Box<Magic>> = None,
+        });
+
+        let mut my_struct = MyStructBuilder::new()
+            .field_trait(Box::new(Dust { value: 1 }))
+            .field_vec(vec![Box::new(Dust { value: 2 })])
+            .build();
 
         assert_eq!(my_struct.field_trait.abracadabra(), 1);
         assert_eq!(my_struct.field_vec[0].abracadabra(), 2);
