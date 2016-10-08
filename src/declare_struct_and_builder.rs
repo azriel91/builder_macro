@@ -160,8 +160,9 @@ macro_rules! declare_struct_and_builder {
             )*
         }
 
-        // stringify!($STRUCT)
-        #[doc="Generated struct builder"]
+        // Unfortunately we cannot make the docs specific to the struct e.g. passing stringify!($STRUCT)
+        // See https://github.com/rust-lang/rust/issues/12404#issuecomment-35557322
+        /// Auto-generated builder
         $( $VIS )* struct $BUILDER {
             // builder fields shouldn't have to be visible
             $(
