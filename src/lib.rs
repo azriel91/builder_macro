@@ -2,8 +2,15 @@
 
 //! This crate contains a `builder!` macro to declare a struct and a corresponding builder.
 //!
-//! The macro is inspired from [jadpole/builder-macro][1], and is designed to
-//! remove duplication of field declaration, as well as generating appropriate setter methods.
+//! The macro is inspired from [jadpole/builder-macro][1], and is designed to remove duplication of field declaration,
+//! as well as generating appropriate setter methods.
+//!
+//! Specify the dependency in your crate's `Cargo.toml`:
+//!
+//! ```toml
+//! [dependencies]
+//! builder_macro = "0.1.0"
+//! ```
 //!
 //! Include the macro inside your crate's `lib.rs` or `main.rs`.
 //!
@@ -68,7 +75,7 @@
 //!     }
 //!
 //!     #[allow(dead_code)]
-//!     /// Specify a value for the $F_NAME field
+//!     /// Auto-generated setter
 //!     pub fn value(&mut self, value: i32) -> &mut Self {
 //!         self.value = Some(value);
 //!         self
@@ -77,42 +84,7 @@
 //! # }
 //! ```
 //!
-//! The full macro usage format is:
-//!
-//! ```rust
-//! # #[macro_use]
-//! # extern crate builder_macro;
-//! #
-//! # fn main() {
-//! // We declare the builder insider a module simply to demonstrate scope
-//! mod inner {
-//!     builder! {
-//!         /// StructName is an example struct.
-//!         /// These docs are copied over to the generated struct.
-//!         pub BuilderName -> StructName {
-//!             /// a_field is an i32 which must be between 0 and 100 inclusive
-//!             // the trailing comma is mandatory due to how the macro is parsed
-//!             pub a_field: i32 = Some(50),
-//!
-//!             // None means no default value, a value must be specified when building
-//!             // meta attributes are copied over to the struct's fields
-//!             #[allow(dead_code)]
-//!             a_private_field: &'static str = None,
-//!         }, assertions: {
-//!             assert!(a_field >= 0);
-//!             assert!(a_field <= 100);
-//!             // Yes you can assert on private fields
-//!             assert!(!a_private_field.is_empty());
-//!         }
-//!     }
-//! }
-//!
-//! let my_struct = inner::BuilderName::new()
-//!                     .a_private_field("I must set this to a non-empty string")
-//!                     .build();
-//! assert_eq!(50, my_struct.a_field);
-//! # }
-//! ```
+//! To generate public structs and builders, see [visbility](#visibility).
 //!
 //! ## Consuming Builder
 //!
@@ -195,6 +167,117 @@
 //! # }
 //! ```
 //!
+//! ## Full Usage Format
+//!
+//! The full macro usage format is:
+//!
+//! ```rust
+//! # #[macro_use]
+//! # extern crate builder_macro;
+//! #
+//! # fn main() {
+//! // We declare the builder insider a module simply to demonstrate scope
+//! mod inner {
+//!     builder! {
+//!         /// StructName is an example struct.
+//!         /// These docs are copied over to the generated struct.
+//!         pub BuilderName -> StructName {
+//!             /// a_field is an i32 which must be between 0 and 100 inclusive
+//!             // the trailing comma is mandatory due to how the macro is parsed
+//!             pub a_field: i32 = Some(50),
+//!
+//!             // None means no default value, a value must be specified when building
+//!             // meta attributes are copied over to the struct's fields
+//!             #[allow(dead_code)]
+//!             a_private_field: &'static str = None,
+//!         }, assertions: {
+//!             assert!(a_field >= 0);
+//!             assert!(a_field <= 100);
+//!             // Yes you can assert on private fields
+//!             assert!(!a_private_field.is_empty());
+//!         }
+//!     }
+//! }
+//!
+//! let my_struct = inner::BuilderName::new()
+//!                     .a_private_field("I must set this to a non-empty string")
+//!                     .build();
+//!
+//! assert_eq!(50, my_struct.a_field);
+//! # }
+//! ```
+//!
+//! The above will be similar to writing the following:
+//!
+//! ```rust
+//! # #[macro_use]
+//! # extern crate builder_macro;
+//! #
+//! # fn main() {
+//! mod inner {
+//!     /// StructName is an example struct.
+//!     /// These docs are copied over to the generated struct.
+//!     pub struct StructName {
+//!         /// a_field is an i32 which must be between 0 and 100 inclusive
+//!         pub a_field: i32,
+//!         #[allow(dead_code)]
+//!         a_private_field: &'static str,
+//!     }
+//!
+//!     /// Generated struct builder
+//!     pub struct BuilderName {
+//!         /// a_field is an i32 which must be between 0 and 100 inclusive
+//!         a_field: Option<i32>,
+//!         #[allow(dead_code)]
+//!         a_private_field: Option<&'static str>,
+//!     }
+//!
+//!     impl BuilderName {
+//!         /// Construct the builder
+//!         pub fn new() -> BuilderName {
+//!             BuilderName{a_field: Some(50), a_private_field: None,}
+//!         }
+//!
+//!         /// Build the struct
+//!         pub fn build(&self) -> StructName {
+//!             let a_field = self.a_field.clone().unwrap();
+//!             let a_private_field = self.a_private_field.clone().unwrap();
+//!
+//!             assert!(a_field >= 0);
+//!             assert!(a_field <= 100);
+//!             assert!(!a_private_field.is_empty());
+//!
+//!             StructName {
+//!                 a_field: a_field,
+//!                 a_private_field: a_private_field,
+//!             }
+//!         }
+//!
+//!         #[allow(dead_code)]
+//!         /// Auto-generated setter
+//!         pub fn a_field(&mut self, value: i32) -> &mut Self {
+//!             self.a_field = Some(value);
+//!             self
+//!         }
+//!
+//!         #[allow(dead_code)]
+//!         /// Auto-generated setter
+//!         pub fn a_private_field(&mut self, value: &'static str)
+//!          -> &mut Self {
+//!             self.a_private_field = Some(value);
+//!             self
+//!         }
+//!     }
+//! }
+//!
+//! let my_struct = inner::BuilderName::new()
+//!     .a_private_field("I must set this to a non-empty string")
+//!     .build();
+//!
+//! assert_eq!(50, my_struct.a_field);
+//! # }
+//! ```
+//!
 //! [1]: http://jadpole.github.io/rust/builder-macro
 //! [2]: https://doc.rust-lang.org/style/ownership/builders.html#non-consuming-builders-preferred
 //! [3]: https://doc.rust-lang.org/style/ownership/builders.html#consuming-builders
@@ -261,7 +344,7 @@ mod test {
     }
 
     #[test]
-    fn generates_struct_and_builder_with_traits() {
+    fn generates_struct_and_builder_with_traits_using_default_values() {
         trait Magic {
             fn abracadabra(&mut self) -> i32;
         }
@@ -281,6 +364,35 @@ mod test {
         });
 
         let mut my_struct = MyStructBuilder::new().build();
+
+        assert_eq!(my_struct.field_trait.abracadabra(), 1);
+        assert_eq!(my_struct.field_vec[0].abracadabra(), 2);
+    }
+
+    #[test]
+    fn generates_struct_and_builder_with_traits_specifying_parameters() {
+        trait Magic {
+            fn abracadabra(&mut self) -> i32;
+        }
+        struct Dust {
+            value: i32,
+        };
+        impl Magic for Dust {
+            fn abracadabra(&mut self) -> i32 {
+                self.value
+            }
+        }
+
+        // Note: we use => instead of -> for the consuming variant of the builder
+        builder!(MyStructBuilder => MyStruct {
+            field_trait: Box<Magic> = None,
+            field_vec: Vec<Box<Magic>> = None,
+        });
+
+        let mut my_struct = MyStructBuilder::new()
+            .field_trait(Box::new(Dust { value: 1 }))
+            .field_vec(vec![Box::new(Dust { value: 2 })])
+            .build();
 
         assert_eq!(my_struct.field_trait.abracadabra(), 1);
         assert_eq!(my_struct.field_vec[0].abracadabra(), 2);
