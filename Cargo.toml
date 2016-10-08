@@ -4,5 +4,7 @@ version = "0.2.0"
 authors = ["Azriel Hoh <azriel91@gmail.com>"]
 description = "A macro to generate structs and a corresponding builder"
 license = "MIT"
+documentation = "http://www.azriel.im/builder_macro"
 repository = "https://github.com/azriel91/builder_macro"
 readme = "README.md"
+keywords = ["builder", "macro", "consuming", "non-consuming"]
