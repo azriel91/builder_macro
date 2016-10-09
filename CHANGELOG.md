@@ -1,4 +1,4 @@
-## 0.1.1 (unreleased)
+## 0.1.1 (2016-10-10)
 
 * Updated documentation
 * Added automated generation of documentation to `gh-pages`, published at [azriel.im/builder_macro](http://azriel.im/builder_macro)
