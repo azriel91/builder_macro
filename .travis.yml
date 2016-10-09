@@ -7,6 +7,9 @@ os:
 
 language: rust
 
+# decreases build time (compilation)
+cache: cargo
+
 # necessary for `travis-cargo coveralls --no-sudo`
 addons:
   apt:
@@ -24,6 +27,7 @@ rust:
 
 # load travis-cargo
 before_script:
+  - cargo install rustfmt || true # cargo install fails if the package is already installed
   - |
       export PYTHONUSERBASE=$HOME/.local &&
       pip install 'travis-cargo<0.2' --user &&
@@ -32,7 +36,7 @@ before_script:
 # the main build
 script:
   - |
-      travis-cargo build &&
+      ./rust_build/build.sh &&
       travis-cargo test &&
       travis-cargo --only stable doc
 after_success:

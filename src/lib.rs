@@ -9,7 +9,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! builder_macro = "0.1.0"
+//! builder_macro = "0.1.1" # check https://crates.io/crates/builder_macro for the latest version
 //! ```
 //!
 //! Include the macro inside your crate's `lib.rs` or `main.rs`.
@@ -48,7 +48,7 @@
 //! # }
 //! ```
 //!
-//! The generated builder and struct will be:
+//! The generated code will function as follows:
 //!
 //! ```rust
 //! # #[macro_use]
@@ -59,7 +59,7 @@
 //!     value: i32,
 //! }
 //!
-//! #[doc = "Generated struct builder"]
+//! /// Auto-generated builder
 //! struct BuilderName {
 //!     value: Option<i32>,
 //! }
@@ -101,7 +101,7 @@
 //! }
 //! struct Dust {
 //!     value: i32,
-//! };
+//! }
 //! impl Magic for Dust {
 //!     fn abracadabra(&mut self) -> i32 {
 //!         self.value
@@ -224,7 +224,7 @@
 //!         a_private_field: &'static str,
 //!     }
 //!
-//!     /// Generated struct builder
+//!     /// Auto-generated builder
 //!     pub struct BuilderName {
 //!         /// a_field is an i32 which must be between 0 and 100 inclusive
 //!         a_field: Option<i32>,
