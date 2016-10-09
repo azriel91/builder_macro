@@ -24,6 +24,7 @@ rust:
 
 # load travis-cargo
 before_script:
+  - cargo install rustfmt
   - |
       export PYTHONUSERBASE=$HOME/.local &&
       pip install 'travis-cargo<0.2' --user &&
@@ -32,7 +33,7 @@ before_script:
 # the main build
 script:
   - |
-      travis-cargo build &&
+      ./rust_build/build.sh &&
       travis-cargo test &&
       travis-cargo --only stable doc
 after_success:
