@@ -1,0 +1,11 @@
+; DO NOT EDIT (unless you know what you are doing)
+;
+; This subdirectory is a git "subrepo", and this file is maintained by the
+; git-subrepo command. See https://github.com/git-commands/git-subrepo#readme
+;
+[subrepo]
+	remote = git@github.com:azriel91/rust_build.git
+	branch = master
+	commit = ca821a822e89939b81bfa09b70e04067173fdd61
+	parent = b623e1154f7b98ce268297d4feeb724852803a90
+	cmdver = 0.4.0
