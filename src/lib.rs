@@ -69,9 +69,10 @@
 //!     pub fn new() -> BuilderName { BuilderName { value: Some(1), } }
 //!
 //!     /// Build the struct
-//!     pub fn build(&self) -> StructName {
-//!         let value = self.value.clone().unwrap();
-//!         StructName{value: value,}
+//!     pub fn build(&self) -> Result<StructName, String> {
+//!         let error = format!("Must pass argument for field: '{}'", stringify!(value));
+//!         let value = try!(self.value.clone().ok_or(error));
+//!         Ok(StructName { value: value, })
 //!     }
 //!
 //!     #[allow(dead_code)]
@@ -114,7 +115,7 @@
 //!     field_vec: Vec<Box<Magic>> = Some(vec![Box::new(Dust { value: 2 })]),
 //! });
 //!
-//! let mut my_struct = MyStructBuilder::new().build();
+//! let mut my_struct = MyStructBuilder::new().build().unwrap();
 //!
 //! assert_eq!(my_struct.field_trait.abracadabra(), 1);
 //! assert_eq!(my_struct.field_vec[0].abracadabra(), 2);
@@ -137,7 +138,8 @@
 //!
 //! let my_struct = MyStructBuilder::new()
 //!     .field_i32(456)
-//!     .build();
+//!     .build()
+//!     .unwrap();
 //! assert_eq!(my_struct.field_i32, 456);
 //! assert_eq!(my_struct.field_str, "abc"); // uses default
 //! # }
@@ -159,7 +161,8 @@
 //!
 //! let my_struct = inner::MyStructBuilder::new()
 //!     .field_i32(456)
-//!     .build();
+//!     .build()
+//!     .unwrap();
 //! assert_eq!(my_struct.field_i32, 456);
 //!
 //! // The next line will fail compilation if uncommented as field_str is private
@@ -201,7 +204,8 @@
 //!
 //! let my_struct = inner::BuilderName::new()
 //!                     .a_private_field("I must set this to a non-empty string")
-//!                     .build();
+//!                     .build()
+//!                     .unwrap();
 //!
 //! assert_eq!(50, my_struct.a_field);
 //! # }
@@ -239,18 +243,20 @@
 //!         }
 //!
 //!         /// Build the struct
-//!         pub fn build(&self) -> StructName {
-//!             let a_field = self.a_field.clone().unwrap();
-//!             let a_private_field = self.a_private_field.clone().unwrap();
+//!         pub fn build(&self) -> Result<StructName, String> {
+//!             let error = format!("Must pass argument for field: '{}'", stringify!(a_field));
+//!             let a_field = try!(self.a_field.clone().ok_or(error));
+//!             let error = format!("Must pass argument for field: '{}'", stringify!(a_private_field));
+//!             let a_private_field = try!(self.a_private_field.clone().ok_or(error));
 //!
 //!             assert!(a_field >= 0);
 //!             assert!(a_field <= 100);
 //!             assert!(!a_private_field.is_empty());
 //!
-//!             StructName {
+//!             Ok(StructName {
 //!                 a_field: a_field,
 //!                 a_private_field: a_private_field,
-//!             }
+//!             })
 //!         }
 //!
 //!         #[allow(dead_code)]
@@ -272,7 +278,8 @@
 //!
 //! let my_struct = inner::BuilderName::new()
 //!     .a_private_field("I must set this to a non-empty string")
-//!     .build();
+//!     .build()
+//!     .unwrap();
 //!
 //! assert_eq!(50, my_struct.a_field);
 //! # }
@@ -310,7 +317,7 @@ mod test {
             field_str: &'static str = Some("abc"),
         });
 
-        let my_struct = MyStructBuilder::new().build();
+        let my_struct = MyStructBuilder::new().build().unwrap();
         assert_eq!(my_struct.field_i32, 123);
         assert_eq!(my_struct.field_str, "abc");
     }
@@ -325,7 +332,8 @@ mod test {
         let my_struct = MyStructBuilder::new()
             .field_i32(456)
             .field_str("str")
-            .build();
+            .build()
+            .unwrap();
         assert_eq!(my_struct.field_i32, 456);
         assert_eq!(my_struct.field_str, "str");
     }
@@ -336,8 +344,11 @@ mod test {
             field_vec: Vec<i32> = Some(vec![123]),
         });
 
-        let my_struct = MyStructBuilder::new().build();
-        let my_struct_2 = MyStructBuilder::new().field_vec(vec![234, 456]).build();
+        let my_struct = MyStructBuilder::new().build().unwrap();
+        let my_struct_2 = MyStructBuilder::new()
+            .field_vec(vec![234, 456])
+            .build()
+            .unwrap();
 
         assert_eq!(my_struct.field_vec, vec![123]);
         assert_eq!(my_struct_2.field_vec, vec![234, 456]);
@@ -363,7 +374,7 @@ mod test {
             field_vec: Vec<Box<Magic>> = Some(vec![Box::new(Dust { value: 2 })]),
         });
 
-        let mut my_struct = MyStructBuilder::new().build();
+        let mut my_struct = MyStructBuilder::new().build().unwrap();
 
         assert_eq!(my_struct.field_trait.abracadabra(), 1);
         assert_eq!(my_struct.field_vec[0].abracadabra(), 2);
@@ -392,7 +403,8 @@ mod test {
         let mut my_struct = MyStructBuilder::new()
             .field_trait(Box::new(Dust { value: 1 }))
             .field_vec(vec![Box::new(Dust { value: 2 })])
-            .build();
+            .build()
+            .unwrap();
 
         assert_eq!(my_struct.field_trait.abracadabra(), 1);
         assert_eq!(my_struct.field_vec[0].abracadabra(), 2);
@@ -410,7 +422,8 @@ mod test {
 
         let my_struct = MyStructBuilder::new()
             .field_i32(-1)
-            .build();
+            .build()
+            .unwrap();
         assert_eq!(my_struct.field_i32, -1);
     }
 
@@ -423,27 +436,27 @@ mod test {
 
             #[test]
             fn can_access_private_struct_from_within_module() {
-                let my_struct = MyStructBuilder::new().build();
+                let my_struct = MyStructBuilder::new().build().unwrap();
                 assert_eq!(my_struct.field_i32, 1);
             }
 
             #[test]
             fn can_access_private_outer_struct_from_inner_module() {
-                let outer_struct = super::OuterStructBuilder::new().build();
+                let outer_struct = super::OuterStructBuilder::new().build().unwrap();
                 assert_eq!(outer_struct.field_i32, 1);
             }
         }
 
         #[test]
         fn can_access_public_struct_from_outside_module() {
-            let inner_struct = inner::InnerStructBuilder::new().build();
+            let inner_struct = inner::InnerStructBuilder::new().build().unwrap();
             assert_eq!(inner_struct.field_i32, 1);
         }
 
         // The following causes a compilation failure if uncommented
         // #[test]
         // fn cannot_access_private_struct() {
-        //     let my_struct = inner::MyStructBuilder::new().build();
+        //     let my_struct = inner::MyStructBuilder::new().build().unwrap();
         //     assert_eq!(my_struct.field_i32, 0);
         // }
     }

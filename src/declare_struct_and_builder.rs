@@ -47,13 +47,18 @@ macro_rules! declare_struct_and_builder {
             }
 
             /// Build the struct
-            pub fn build(&self) -> $STRUCT {
-                $( let $F_NAME = self.$F_NAME.clone().unwrap(); )*
+            pub fn build(&self) -> Result<$STRUCT, String> {
+                // Nested macro call should be stable for format!
+                // https://github.com/rust-lang/rust/blob/1.12.0/src/libsyntax_ext/format.rs#L684-L687
+                $(
+                    let error = format!("Must pass argument for field: '{}'", stringify!($F_NAME));
+                    let $F_NAME = try!(self.$F_NAME.clone().ok_or(error));
+                )*
                 $( $( $ASSERTION; )* )*
 
-                $STRUCT {
+                Ok($STRUCT {
                     $( $F_NAME : $F_NAME ),*
-                }
+                })
             }
 
             $(
@@ -113,13 +118,18 @@ macro_rules! declare_struct_and_builder {
             }
 
             /// Build the struct
-            pub fn build(self) -> $STRUCT {
-                $( let $F_NAME = self.$F_NAME.unwrap(); )*
+            pub fn build(self) -> Result<$STRUCT, String> {
+                // Nested macro call should be stable for format!
+                // https://github.com/rust-lang/rust/blob/1.12.0/src/libsyntax_ext/format.rs#L684-L687
+                $(
+                    let error = format!("Must pass argument for field: '{}'", stringify!($F_NAME));
+                    let $F_NAME = try!(self.$F_NAME.ok_or(error));
+                )*
                 $( $( $ASSERTION; )* )*
 
-                $STRUCT {
+                Ok($STRUCT {
                     $( $F_NAME : $F_NAME ),*
-                }
+                })
             }
 
             $(
