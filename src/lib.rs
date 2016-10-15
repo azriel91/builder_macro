@@ -310,6 +310,19 @@ macro_rules! builder {
 
 #[cfg(test)]
 mod test {
+    // used in consuming builder tests
+    trait Magic {
+        fn abracadabra(&mut self) -> i32;
+    }
+    struct Dust {
+        value: i32,
+    }
+    impl Magic for Dust {
+        fn abracadabra(&mut self) -> i32 {
+            self.value
+        }
+    }
+
     #[test]
     fn generates_struct_and_builder_with_defaults() {
         builder!(MyStructBuilder -> MyStruct {
@@ -356,18 +369,6 @@ mod test {
 
     #[test]
     fn generates_struct_and_builder_with_traits_using_default_values() {
-        trait Magic {
-            fn abracadabra(&mut self) -> i32;
-        }
-        struct Dust {
-            value: i32,
-        };
-        impl Magic for Dust {
-            fn abracadabra(&mut self) -> i32 {
-                self.value
-            }
-        }
-
         // Note: we use => instead of -> for the consuming variant of the builder
         builder!(MyStructBuilder => MyStruct {
             field_trait: Box<Magic> = Some(Box::new(Dust { value: 1 })),
@@ -382,18 +383,6 @@ mod test {
 
     #[test]
     fn generates_struct_and_builder_with_traits_specifying_parameters() {
-        trait Magic {
-            fn abracadabra(&mut self) -> i32;
-        }
-        struct Dust {
-            value: i32,
-        };
-        impl Magic for Dust {
-            fn abracadabra(&mut self) -> i32 {
-                self.value
-            }
-        }
-
         // Note: we use => instead of -> for the consuming variant of the builder
         builder!(MyStructBuilder => MyStruct {
             field_trait: Box<Magic> = None,
@@ -411,20 +400,61 @@ mod test {
     }
 
     #[test]
-    #[should_panic(expected = "assertion failed")]
     fn generated_build_method_uses_assertions() {
         builder!(MyStructBuilder -> MyStruct {
+            #[allow(dead_code)]
             field_i32: i32 = Some(123),
         },
         assertions: {
             assert!(field_i32 > 0);
         });
 
-        let my_struct = MyStructBuilder::new()
-            .field_i32(-1)
-            .build()
-            .unwrap();
-        assert_eq!(my_struct.field_i32, -1);
+        let result = MyStructBuilder::new().field_i32(-1).build();
+
+        match result {
+            Ok(_) => panic!("Expected Err() caused by assertion failure"),
+            Err(msg) => assert_eq!(msg, "assertion failed: 'assert!(field_i32 > 0)'"),
+        }
+    }
+
+    #[test]
+    fn generated_consuming_build_method_uses_assertions() {
+        builder!(MyStructBuilder => MyStruct {
+            #[allow(dead_code)]
+            field_i32: i32 = Some(123),
+        },
+        assertions: {
+            assert!(field_i32 == 99);
+        });
+
+        let result = MyStructBuilder::new().build();
+
+        let expected = "assertion failed: 'assert!(field_i32 == 99)'";
+        match result {
+            Ok(_) => panic!("Expected Err() caused by assertion failure"),
+            Err(msg) => assert_eq!(msg, expected),
+        }
+    }
+
+    #[test]
+    fn generated_consuming_build_method_asserts_on_trait_fields() {
+        builder!(MyStructBuilder => MyStruct {
+            #[allow(dead_code)]
+            field_trait: Box<Magic> = Some(Box::new(Dust { value: 1 })),
+        },
+        assertions: {
+            assert_eq!(field_trait.abracadabra(), 99);
+        });
+
+        let result = MyStructBuilder::new().build();
+
+        match result {
+            Ok(_) => panic!("Expected Err() caused by assertion failure"),
+            Err(msg) => {
+                assert_eq!(msg,
+                           "assertion failed: 'assert_eq!(field_trait . abracadabra (  ) , 99)'")
+            }
+        }
     }
 
     mod visibility_test {

@@ -54,7 +54,14 @@ macro_rules! declare_struct_and_builder {
                     let error = format!("Must pass argument for field: '{}'", stringify!($F_NAME));
                     let $F_NAME = try!(self.$F_NAME.clone().ok_or(error));
                 )*
-                $( $( $ASSERTION; )* )*
+
+                $(
+                    use std::panic;
+                    $(
+                        try!(panic::catch_unwind(|| { $ASSERTION; })
+                            .or( Err(format!("assertion failed: '{}'", stringify!($ASSERTION))) ) );
+                    )*
+                )*
 
                 Ok($STRUCT {
                     $( $F_NAME : $F_NAME ),*
@@ -118,14 +125,25 @@ macro_rules! declare_struct_and_builder {
             }
 
             /// Build the struct
+            #[allow(unused_mut)]
             pub fn build(self) -> Result<$STRUCT, String> {
                 // Nested macro call should be stable for format!
                 // https://github.com/rust-lang/rust/blob/1.12.0/src/libsyntax_ext/format.rs#L684-L687
                 $(
                     let error = format!("Must pass argument for field: '{}'", stringify!($F_NAME));
-                    let $F_NAME = try!(self.$F_NAME.ok_or(error));
+
+                    // mutability is necessary for assertions on trait fields to work, otherwise the compiler fails
+                    // with unwind safety not being satisfied
+                    let mut $F_NAME = try!(self.$F_NAME.ok_or(error));
                 )*
-                $( $( $ASSERTION; )* )*
+
+                $(
+                    use std::panic::{self, AssertUnwindSafe};
+                    $(
+                        try!(panic::catch_unwind(AssertUnwindSafe(|| { $ASSERTION; }))
+                            .or( Err(format!("assertion failed: '{}'", stringify!($ASSERTION))) ) );
+                    )*
+                )*
 
                 Ok($STRUCT {
                     $( $F_NAME : $F_NAME ),*
