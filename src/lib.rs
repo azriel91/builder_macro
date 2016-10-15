@@ -9,7 +9,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! builder_macro = "0.1.1" # check https://crates.io/crates/builder_macro for the latest version
+//! builder_macro = "0.2.0"
 //! ```
 //!
 //! Include the macro inside your crate's `lib.rs` or `main.rs`.
