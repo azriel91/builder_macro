@@ -1,3 +1,5 @@
+## 0.2.0 (unreleased)
+
 ## 0.1.1 (2016-10-10)
 
 * Updated documentation
