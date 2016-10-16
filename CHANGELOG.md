@@ -1,3 +1,5 @@
+## 0.3.0 (unreleased)
+
 ## 0.2.0 (2016-10-17)
 
 * Return `Result<T, String>` from the `build()` method

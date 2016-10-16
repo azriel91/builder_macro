@@ -9,7 +9,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! builder_macro = "0.2.0"
+//! builder_macro = "0.3.0"
 //! ```
 //!
 //! Include the macro inside your crate's `lib.rs` or `main.rs`.
