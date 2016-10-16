@@ -170,6 +170,40 @@
 //! # }
 //! ```
 //!
+//! ## Assertions
+//!
+//! You may specify assertions after field declarations inside an `assertions: { ... }` block.
+//!
+//! If an assertion fails, the `build()` method will return an `Err(...)`.
+//!
+//! ```rust
+//! # #[macro_use]
+//! # extern crate builder_macro;
+//! #
+//! # fn main() {
+//! builder! {
+//!     pub BuilderName -> StructName {
+//!         /// a_field is an i32 which must be between 0 and 100 inclusive
+//!         pub a_field: i32 = Some(50),
+//!         #[allow(dead_code)]
+//!         a_private_field: &'static str = None,
+//!     }, assertions: {
+//!         assert!(a_field >= 0);
+//!         assert!(a_field <= 100);
+//!         // Yes you can assert on private fields
+//!         assert!(!a_private_field.is_empty());
+//!     }
+//! }
+//!
+//! let result_1 = BuilderName::new().a_private_field("non-empty string").build();
+//! let result_2 = BuilderName::new().a_private_field("").build();
+//!
+//! assert!(result_1.is_ok());
+//! assert_eq!(result_2.err(),
+//!            Some("assertion failed: 'assert!(! a_private_field . is_empty (  ))'".to_string()));
+//! # }
+//! ```
+//!
 //! ## Full Usage Format
 //!
 //! The full macro usage format is:
@@ -203,9 +237,9 @@
 //! }
 //!
 //! let my_struct = inner::BuilderName::new()
-//!                     .a_private_field("I must set this to a non-empty string")
-//!                     .build()
-//!                     .unwrap();
+//!     .a_private_field("I must set this to a non-empty string")
+//!     .build()
+//!     .unwrap();
 //!
 //! assert_eq!(50, my_struct.a_field);
 //! # }
@@ -244,14 +278,18 @@
 //!
 //!         /// Build the struct
 //!         pub fn build(&self) -> Result<StructName, String> {
-//!             let error = format!("Must pass argument for field: '{}'", stringify!(a_field));
-//!             let a_field = try!(self.a_field.clone().ok_or(error));
-//!             let error = format!("Must pass argument for field: '{}'", stringify!(a_private_field));
-//!             let a_private_field = try!(self.a_private_field.clone().ok_or(error));
+//!             let a_field = try!(self.a_field.clone()
+//!                 .ok_or( format!("Must pass argument for field: '{}'", stringify!(a_field)) ));
+//!             let a_private_field = try!(self.a_private_field.clone()
+//!                 .ok_or( format!("Must pass argument for field: '{}'", stringify!(a_private_field)) ));
 //!
-//!             assert!(a_field >= 0);
-//!             assert!(a_field <= 100);
-//!             assert!(!a_private_field.is_empty());
+//!             use std::panic;
+//!             try!(panic::catch_unwind(|| { assert!(a_field >= 0); })
+//!                 .or( Err(format!("assertion failed: '{}'", stringify!( assert!(a_field >= 0) ))) ) );
+//!             try!(panic::catch_unwind(|| { assert!(a_field <= 100); })
+//!                 .or( Err(format!("assertion failed: '{}'", stringify!( assert!(a_field <= 100) ))) ) );
+//!             try!(panic::catch_unwind(|| { assert!(!a_private_field.is_empty()); })
+//!                 .or( Err(format!("assertion failed: '{}'", stringify!( assert!(!a_private_field.is_empty()) ))) ) );
 //!
 //!             Ok(StructName {
 //!                 a_field: a_field,
