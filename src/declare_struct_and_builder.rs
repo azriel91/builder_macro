@@ -51,8 +51,8 @@ macro_rules! declare_struct_and_builder {
                 // Nested macro call should be stable for format!
                 // https://github.com/rust-lang/rust/blob/1.12.0/src/libsyntax_ext/format.rs#L684-L687
                 $(
-                    let error = format!("Must pass argument for field: '{}'", stringify!($F_NAME));
-                    let $F_NAME = try!(self.$F_NAME.clone().ok_or(error));
+                    let $F_NAME = try!(self.$F_NAME.clone()
+                        .ok_or( format!("Must pass argument for field: '{}'", stringify!($F_NAME)) ));
                 )*
 
                 $(
@@ -130,11 +130,10 @@ macro_rules! declare_struct_and_builder {
                 // Nested macro call should be stable for format!
                 // https://github.com/rust-lang/rust/blob/1.12.0/src/libsyntax_ext/format.rs#L684-L687
                 $(
-                    let error = format!("Must pass argument for field: '{}'", stringify!($F_NAME));
-
                     // mutability is necessary for assertions on trait fields to work, otherwise the compiler fails
                     // with unwind safety not being satisfied
-                    let mut $F_NAME = try!(self.$F_NAME.ok_or(error));
+                    let mut $F_NAME = try!(self.$F_NAME
+                        .ok_or( format!("Must pass argument for field: '{}'", stringify!($F_NAME)) ));
                 )*
 
                 $(
