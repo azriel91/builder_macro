@@ -1,5 +1,9 @@
 ## 0.2.0 (unreleased)
 
+* Return `Result<T, String>` from the `build()` method
+* Return `Err(...)` when a parameter is not passed and there is no default value
+* Return `Err(...)` when an assertion fails
+
 ## 0.1.1 (2016-10-10)
 
 * Updated documentation
