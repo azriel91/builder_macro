@@ -4,6 +4,7 @@
 * Parameters without a default no longer use ` = None` when they are specified
 * Default values are now specified using `default_value` instead of `Some(default_value)`
 * Replace the `try!` macro with the `?` operator
+* Enabled Rust playground for snippets in generated docs
 
 ## 0.4.0 (2016-10-23)
 

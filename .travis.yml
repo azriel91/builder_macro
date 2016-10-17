@@ -40,7 +40,7 @@ script:
   - |
       LOG_LEVEL=4 ./rust_build/build.sh &&
       travis-cargo test &&
-      travis-cargo --only stable doc
+      travis-cargo --only stable doc -- --markdown-playground-url='https://play.rust-lang.org'
 after_success:
   # upload the documentation from the build with stable (automatically only actually
   # runs on the master branch, not individual PRs)
