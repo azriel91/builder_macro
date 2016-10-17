@@ -69,9 +69,9 @@
 //!     pub fn new() -> BuilderName { BuilderName { value: Some(1), } }
 //!
 //!     /// Build the struct
-//!     pub fn build(&self) -> Result<StructName, String> {
-//!         let error = format!("Must pass argument for field: '{}'", stringify!(value));
-//!         let value = try!(self.value.clone().ok_or(error));
+//!     pub fn build(&self) -> Result<StructName, &'static str> {
+//!         let value = try!(self.value.clone()
+//!             .ok_or(concat!("Must pass argument for field: '", stringify!(value), "'")));
 //!         Ok(StructName { value: value, })
 //!     }
 //!
@@ -199,8 +199,7 @@
 //! let result_2 = BuilderName::new().a_private_field("").build();
 //!
 //! assert!(result_1.is_ok());
-//! assert_eq!(result_2.err(),
-//!            Some("assertion failed: 'assert!(! a_private_field . is_empty (  ))'".to_string()));
+//! assert_eq!(result_2.err(), Some("assertion failed: 'assert!(! a_private_field . is_empty (  ))'"));
 //! # }
 //! ```
 //!
@@ -277,19 +276,20 @@
 //!         }
 //!
 //!         /// Build the struct
-//!         pub fn build(&self) -> Result<StructName, String> {
+//!         pub fn build(&self) -> Result<StructName, &'static str> {
 //!             let a_field = try!(self.a_field.clone()
-//!                 .ok_or( format!("Must pass argument for field: '{}'", stringify!(a_field)) ));
+//!                 .ok_or( concat!("Must pass argument for field: '", stringify!(a_field), "'") ));
 //!             let a_private_field = try!(self.a_private_field.clone()
-//!                 .ok_or( format!("Must pass argument for field: '{}'", stringify!(a_private_field)) ));
+//!                 .ok_or( concat!("Must pass argument for field: '", stringify!(a_private_field), "'") ));
 //!
 //!             use std::panic;
 //!             try!(panic::catch_unwind(|| { assert!(a_field >= 0); })
-//!                 .or( Err(format!("assertion failed: '{}'", stringify!( assert!(a_field >= 0) ))) ) );
+//!                 .or( Err(concat!("assertion failed: '", stringify!( assert!(a_field >= 0) ), "'")) ) );
 //!             try!(panic::catch_unwind(|| { assert!(a_field <= 100); })
-//!                 .or( Err(format!("assertion failed: '{}'", stringify!( assert!(a_field <= 100) ))) ) );
+//!                 .or( Err(concat!("assertion failed: '", stringify!( assert!(a_field <= 100) ), "'")) ) );
 //!             try!(panic::catch_unwind(|| { assert!(!a_private_field.is_empty()); })
-//!                 .or( Err(format!("assertion failed: '{}'", stringify!( assert!(!a_private_field.is_empty()) ))) ) );
+//!                 .or( Err(
+//!                     concat!("assertion failed: '", stringify!( assert!(!a_private_field.is_empty()) ), "'")) ) );
 //!
 //!             Ok(StructName {
 //!                 a_field: a_field,
