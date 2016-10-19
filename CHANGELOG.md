@@ -1,5 +1,7 @@
 ## 0.3.0 (unreleased)
 
+* Return `Result<T, &static str>` from the `build()` method instead of `Result<T, String>`
+
 ## 0.2.0 (2016-10-17)
 
 * Return `Result<T, String>` from the `build()` method
