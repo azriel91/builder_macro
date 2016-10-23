@@ -1,8 +1,8 @@
 #[doc(hidden)]
 #[macro_export]
 macro_rules! parse_struct {
-    // The way we determine visibility of the generated builder and struct is based on the pattern in:
-    // https://github.com/rust-lang-nursery/lazy-static.rs/blob/v0.2.1/src/lib.rs
+    // The way we determine visibility of the generated builder and struct is based on the pattern
+    // in: https://github.com/rust-lang-nursery/lazy-static.rs/blob/v0.2.1/src/lib.rs
 
     // Loop through each meta item in SPEC, extract it and prepend it to ITEM_META
     (
@@ -18,8 +18,9 @@ macro_rules! parse_struct {
     };
 
     // When we reach here, we have parsed all of the meta items for the struct.
-    // Next we have to extract the tokens for each field into a block, then parse the meta items for each field.
-    // We have to do this because the rust compiler does not allow us to use a macro within the struct body:
+    // Next we have to extract the tokens for each field into a block, then parse the meta items for
+    // each field. We have to do this because the rust compiler does not allow us to use a macro
+    // within the struct body:
     //
     // struct Something {
     //     parse_fields!( $( $FIELD_SPEC )* ); // compilation failure

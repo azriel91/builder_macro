@@ -2,8 +2,8 @@
 
 //! This crate contains a `builder!` macro to declare a struct and a corresponding builder.
 //!
-//! The macro is inspired from [jadpole/builder-macro][1], and is designed to remove duplication of field declaration,
-//! as well as generating appropriate setter methods.
+//! The macro is inspired from [jadpole/builder-macro][1], and is designed to remove duplication of
+//! field declaration, as well as generating appropriate setter methods.
 //!
 //! Specify the dependency in your crate's `Cargo.toml`:
 //!
@@ -33,7 +33,8 @@
 //! });
 //! ```
 //!
-//! The above will generate a module private struct and a non-consuming builder with a single private field.
+//! The above will generate a module private struct and a non-consuming builder with a single
+//! private field.
 //!
 //! For example, given the following declaration:
 //!
@@ -89,8 +90,8 @@
 //!
 //! ## Consuming Builder
 //!
-//! To generate a [consuming builder][3], instead of using `->`, use `=>` between the builder name and the target struct
-//! name.
+//! To generate a [consuming builder][3], instead of using `->`, use `=>` between the builder name
+//! and the target struct name.
 //!
 //! ```rust
 //! # #[macro_use]
@@ -199,7 +200,8 @@
 //! let result_2 = BuilderName::new().a_private_field("").build();
 //!
 //! assert!(result_1.is_ok());
-//! assert_eq!(result_2.err(), Some("assertion failed: 'assert!(! a_private_field . is_empty (  ))'"));
+//! assert_eq!(result_2.err(),
+//!            Some("assertion failed: 'assert!(! a_private_field . is_empty (  ))'"));
 //! # }
 //! ```
 //!
@@ -277,19 +279,24 @@
 //!
 //!         /// Build the struct
 //!         pub fn build(&self) -> Result<StructName, &'static str> {
-//!             let a_field = try!(self.a_field.clone()
-//!                 .ok_or( concat!("Must pass argument for field: '", stringify!(a_field), "'") ));
-//!             let a_private_field = try!(self.a_private_field.clone()
-//!                 .ok_or( concat!("Must pass argument for field: '", stringify!(a_private_field), "'") ));
+//!             let a_field = try!(self.a_field.clone().ok_or(
+//!                 concat!("Must pass argument for field: '", stringify!(a_field), "'") ));
+//!             let a_private_field = try!(self.a_private_field.clone().ok_or(
+//!                 concat!("Must pass argument for field: '", stringify!(a_private_field), "'") ));
 //!
 //!             use std::panic;
-//!             try!(panic::catch_unwind(|| { assert!(a_field >= 0); })
-//!                 .or( Err(concat!("assertion failed: '", stringify!( assert!(a_field >= 0) ), "'")) ) );
-//!             try!(panic::catch_unwind(|| { assert!(a_field <= 100); })
-//!                 .or( Err(concat!("assertion failed: '", stringify!( assert!(a_field <= 100) ), "'")) ) );
-//!             try!(panic::catch_unwind(|| { assert!(!a_private_field.is_empty()); })
-//!                 .or( Err(
-//!                     concat!("assertion failed: '", stringify!( assert!(!a_private_field.is_empty()) ), "'")) ) );
+//!             try!(panic::catch_unwind(|| { assert!(a_field >= 0); }).or(
+//!                 Err(concat!("assertion failed: '",
+//!                             stringify!( assert!(a_field >= 0) ),
+//!                             "'")) ) );
+//!             try!(panic::catch_unwind(|| { assert!(a_field <= 100); }).or(
+//!                 Err(concat!("assertion failed: '",
+//!                             stringify!( assert!(a_field <= 100) ),
+//!                             "'")) ) );
+//!             try!(panic::catch_unwind(|| { assert!(!a_private_field.is_empty()); }).or(
+//!                     Err(concat!("assertion failed: '",
+//!                                 stringify!( assert!(!a_private_field.is_empty()) ),
+//!                                 "'")) ) );
 //!
 //!             Ok(StructName {
 //!                 a_field: a_field,
@@ -334,7 +341,8 @@ mod declare_struct_and_builder;
 mod parse_struct;
 
 #[macro_export]
-/// Macro to declare a struct and a corresponding builder. See [the module documentation](index.html) for more.
+/// Macro to declare a struct and a corresponding builder. See
+/// [the module documentation](index.html) for more.
 macro_rules! builder {
     ( $( $SPEC:tt )* )
     =>

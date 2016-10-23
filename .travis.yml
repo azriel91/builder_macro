@@ -27,7 +27,9 @@ rust:
 
 # load travis-cargo
 before_script:
-  - cargo install rustfmt || true # cargo install fails if the package is already installed
+  - |
+    cargo install rustfmt || true # cargo install fails if the package is already installed
+    export PATH=$HOME/.cargo/bin:$PATH # rustfmt sometimes does not appear on the PATH
   - |
       export PYTHONUSERBASE=$HOME/.local &&
       pip install 'travis-cargo<0.2' --user &&
@@ -36,7 +38,7 @@ before_script:
 # the main build
 script:
   - |
-      ./rust_build/build.sh &&
+      LOG_LEVEL=4 ./rust_build/build.sh &&
       travis-cargo test &&
       travis-cargo --only stable doc
 after_success:
@@ -50,7 +52,7 @@ after_success:
   # workaround while travis-cargo doesn't pass correct arguments to kcov
   # see https://github.com/huonw/travis-cargo/pull/55
   - |
-      if ! rustup run stable rustc --version | grep -q 'beta\|nightly' ; then \
+      if test $TRAVIS_OS_NAME = linux && ! rustc --version | grep -q 'beta\|nightly' ; then \
         ./kcov/build/src/kcov --verify \
                               --coveralls-id=$TRAVIS_JOB_ID \
                               --exclude-pattern=/.cargo \
@@ -63,3 +65,8 @@ env:
     # we don't user any nightly features right now
     # override the default `--features unstable` used for the nightly branch
     - TRAVIS_CARGO_NIGHTLY_FEATURE=""
+
+notifications:
+  email:
+    on_success: change
+    on_failure: change
