@@ -48,11 +48,14 @@ after_success:
   # measure code coverage and upload to coveralls.io (the verify
   # argument mitigates kcov crashes due to malformed debuginfo, at the
   # cost of some speed <https://github.com/huonw/travis-cargo/issues/12>)
-  - travis-cargo coveralls --no-sudo --verify
+
+  # manually call kcov
   # workaround while travis-cargo doesn't pass correct arguments to kcov
   # see https://github.com/huonw/travis-cargo/pull/55
   - |
       if test $TRAVIS_OS_NAME = linux && ! rustc --version | grep -q 'beta\|nightly' ; then \
+        # this installs kcov
+        travis-cargo coveralls --no-sudo --verify
         ./kcov/build/src/kcov --verify \
                               --coveralls-id=$TRAVIS_JOB_ID \
                               --exclude-pattern=/.cargo \
