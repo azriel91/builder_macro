@@ -52,7 +52,7 @@ after_success:
   # workaround while travis-cargo doesn't pass correct arguments to kcov
   # see https://github.com/huonw/travis-cargo/pull/55
   - |
-      if ! rustc --version | grep -q 'beta\|nightly' ; then \
+      if test $TRAVIS_OS_NAME = linux && ! rustc --version | grep -q 'beta\|nightly' ; then \
         ./kcov/build/src/kcov --verify \
                               --coveralls-id=$TRAVIS_JOB_ID \
                               --exclude-pattern=/.cargo \
