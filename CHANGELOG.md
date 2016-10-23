@@ -1,5 +1,7 @@
 ## 0.4.0 (unreleased)
 
+* Updated source code to adhere to Rustfmt defaults.
+
 ## 0.3.0 (2016-10-19)
 
 * Return `Result<T, &'static str>` from the `build()` method instead of `Result<T, String>`
