@@ -36,7 +36,7 @@ before_script:
 # the main build
 script:
   - |
-      ./rust_build/build.sh &&
+      LOG_LEVEL=4 ./rust_build/build.sh &&
       travis-cargo test &&
       travis-cargo --only stable doc
 after_success:
@@ -50,7 +50,7 @@ after_success:
   # workaround while travis-cargo doesn't pass correct arguments to kcov
   # see https://github.com/huonw/travis-cargo/pull/55
   - |
-      if ! rustup run stable rustc --version | grep -q 'beta\|nightly' ; then \
+      if ! rustc --version | grep -q 'beta\|nightly' ; then \
         ./kcov/build/src/kcov --verify \
                               --coveralls-id=$TRAVIS_JOB_ID \
                               --exclude-pattern=/.cargo \
