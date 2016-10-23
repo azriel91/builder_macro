@@ -27,7 +27,9 @@ rust:
 
 # load travis-cargo
 before_script:
-  - cargo install rustfmt || true # cargo install fails if the package is already installed
+  - |
+    cargo install rustfmt || true # cargo install fails if the package is already installed
+    export PATH=$HOME/.cargo/bin:$PATH # rustfmt sometimes does not appear on the PATH
   - |
       export PYTHONUSERBASE=$HOME/.local &&
       pip install 'travis-cargo<0.2' --user &&
