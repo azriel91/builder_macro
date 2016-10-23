@@ -1,4 +1,4 @@
-## 0.4.0 (unreleased)
+## 0.4.0 (2016-10-23)
 
 * Updated source code to adhere to Rustfmt defaults.
 
