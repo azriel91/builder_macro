@@ -61,6 +61,58 @@ macro_rules! impl_builder {
             )*
         }
     };
+    (
+        purpose: object,
+        variant: non_consuming,
+        spec: $BUILDER:ident -> $STRUCT:ident,
+        fields: {
+            $(
+                {
+                    spec: $F_NAME:ident: $F_TY:ty = $F_DEFAULT:expr
+                } $(,)*
+            )*
+        }
+        $(, assertions: { $( $ASSERTION:expr; )* } )*
+    )
+    =>
+    {
+        impl $BUILDER {
+            /// Construct the builder
+            pub fn new() -> $BUILDER {
+                $BUILDER {
+                    $(
+                        $F_NAME : $F_DEFAULT
+                    ),*
+                }
+            }
+
+            // Nested macro call should be stable for format!
+            // https://github.com/rust-lang/rust/blob/1.12.0/src/libsyntax_ext/format.rs#L684-L687
+            /// Build the struct
+            pub fn build(&self) -> $STRUCT {
+                $(
+                    let $F_NAME = self.$F_NAME.clone().expect(
+                        concat!("Must pass argument for field: '", stringify!($F_NAME), "'") );
+                )*
+
+                $( $( $ASSERTION; )* )*
+
+                $STRUCT {
+                    $( $F_NAME : $F_NAME ),*
+                }
+            }
+
+            $(
+                // allow dead code because the user may be using the field default
+                #[allow(dead_code)]
+                /// Auto-generated setter
+                pub fn $F_NAME(&mut self, value: $F_TY) -> &mut Self {
+                    self.$F_NAME = Some(value);
+                    self
+                }
+            )*
+        }
+    };
 
     // Consuming variant
     (
@@ -111,6 +163,61 @@ macro_rules! impl_builder {
                 Ok($STRUCT {
                     $( $F_NAME : $F_NAME ),*
                 })
+            }
+
+            $(
+                // allow dead code because the user may be using the field default
+                #[allow(dead_code)]
+                /// Auto-generated setter
+                pub fn $F_NAME(mut self, value: $F_TY) -> Self {
+                    self.$F_NAME = Some(value);
+                    self
+                }
+            )*
+        }
+    };
+    (
+        purpose: object,
+        variant: consuming,
+        spec: $BUILDER:ident -> $STRUCT:ident,
+        fields: {
+            $(
+                {
+                    spec: $F_NAME:ident: $F_TY:ty = $F_DEFAULT:expr
+                } $(,)*
+            )*
+        }
+        $(, assertions: { $( $ASSERTION:expr; )* } )*
+    )
+    =>
+    {
+        impl $BUILDER {
+            /// Construct the builder
+            pub fn new() -> $BUILDER {
+                $BUILDER {
+                    $(
+                        $F_NAME : $F_DEFAULT
+                    ),*
+                }
+            }
+
+            // Nested macro call should be stable for format!
+            // https://github.com/rust-lang/rust/blob/1.12.0/src/libsyntax_ext/format.rs#L684-L687
+            /// Build the struct
+            #[allow(unused_mut)]
+            pub fn build(self) -> $STRUCT {
+                $(
+                    // mutability is necessary for assertions on trait fields to work, otherwise the
+                    // compiler fails with unwind safety not being satisfied
+                    let mut $F_NAME = self.$F_NAME.expect(
+                        concat!("Must pass argument for field: '", stringify!($F_NAME), "'") );
+                )*
+
+                $( $( $ASSERTION; )* )*
+
+                $STRUCT {
+                    $( $F_NAME : $F_NAME ),*
+                }
             }
 
             $(
