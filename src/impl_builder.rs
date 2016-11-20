@@ -1,26 +1,15 @@
+#[doc(hidden)]
 #[macro_export]
-/// The purpose can be either `data` or `object`.
-///
-/// The purpose should be `data` when the generated `build()` method should return
-/// `Result<Struct, &'static str>`. This should be used when the generated struct is to be
-/// constructed from input at runtime.
-///
-/// The purpose should be `object` when the generated `build()` method should return
-/// `Struct`. This should be used when the generated struct is constructed from known values at
-/// compile time.
-macro_rules! declare_struct_and_builder {
-    // Implement struct and builder when all attributes have been filtered
-    // Non-consuming builder variant
+/// Implements the setters and build method for the consuming variant of the builder.
+macro_rules! impl_builder {
+    // Non-consuming
     (
-        purpose: $PURPOSE:ident,
-        vis: [ $( $VIS:ident )* ],
-        meta: [ $( #[$META:meta] )* ],
+        purpose: data,
+        variant: non_consuming,
         spec: $BUILDER:ident -> $STRUCT:ident,
         fields: {
             $(
                 {
-                    vis: [ $( $FIELD_VIS:ident )* ],
-                    meta: [ $( #[$F_META:meta] )* ],
                     spec: $F_NAME:ident: $F_TY:ty = $F_DEFAULT:expr
                 } $(,)*
             )*
@@ -29,22 +18,6 @@ macro_rules! declare_struct_and_builder {
     )
     =>
     {
-        declare_struct_and_builder! {
-            MAKE TY,
-            vis: [ $( $VIS )* ],
-            meta: [ $( #[$META] )* ],
-            spec: $BUILDER -> $STRUCT,
-            fields: {
-                $(
-                    {
-                        vis: [ $( $FIELD_VIS )* ],
-                        meta: [ $( #[$F_META] )* ],
-                        spec: $F_NAME: $F_TY = $F_DEFAULT
-                    },
-                )*
-            }
-        }
-
         impl $BUILDER {
             /// Construct the builder
             pub fn new() -> $BUILDER {
@@ -89,17 +62,14 @@ macro_rules! declare_struct_and_builder {
         }
     };
 
-    // Consuming builder variant
+    // Consuming variant
     (
-        purpose: $PURPOSE:ident,
-        vis: [ $( $VIS:ident )* ],
-        meta: [ $( #[$META:meta] )* ],
-        spec: $BUILDER:ident => $STRUCT:ident,
+        purpose: data,
+        variant: consuming,
+        spec: $BUILDER:ident -> $STRUCT:ident,
         fields: {
             $(
                 {
-                    vis: [ $( $FIELD_VIS:ident )* ],
-                    meta: [ $( #[$F_META:meta] )* ],
                     spec: $F_NAME:ident: $F_TY:ty = $F_DEFAULT:expr
                 } $(,)*
             )*
@@ -108,22 +78,6 @@ macro_rules! declare_struct_and_builder {
     )
     =>
     {
-        declare_struct_and_builder! {
-            MAKE TY,
-            vis: [ $( $VIS )* ],
-            meta: [ $( #[$META] )* ],
-            spec: $BUILDER => $STRUCT,
-            fields: {
-                $(
-                    {
-                        vis: [ $( $FIELD_VIS )* ],
-                        meta: [ $( #[$F_META] )* ],
-                        spec: $F_NAME: $F_TY = $F_DEFAULT
-                    },
-                )*
-            }
-        }
-
         impl $BUILDER {
             /// Construct the builder
             pub fn new() -> $BUILDER {
@@ -167,45 +121,6 @@ macro_rules! declare_struct_and_builder {
                     self.$F_NAME = Some(value);
                     self
                 }
-            )*
-        }
-    };
-
-    // Declare the struct and the builder
-    (
-        MAKE TY,
-        vis: [ $( $VIS:ident )* ],
-        meta: [ $( #[$META:meta] )* ],
-        spec: $BUILDER:ident $MODE:tt $STRUCT:ident,
-        fields: {
-            $(
-                {
-                    vis: [ $( $FIELD_VIS:ident )* ],
-                    meta: [ $( #[$F_META:meta] )* ],
-                    spec: $F_NAME:ident: $F_TY:ty = $F_DEFAULT:expr
-                } $(,)*
-            )*
-        }
-    )
-    =>
-    {
-        $( #[$META] )*
-        $( $VIS )* struct $STRUCT {
-            $(
-                $( #[$F_META] )*
-                $( $FIELD_VIS )* $F_NAME : $F_TY,
-            )*
-        }
-
-        // Unfortunately we cannot make the docs specific to the struct
-        // e.g. passing stringify!($STRUCT)
-        // See https://github.com/rust-lang/rust/issues/12404#issuecomment-35557322
-        /// Auto-generated builder
-        $( $VIS )* struct $BUILDER {
-            // builder fields shouldn't have to be visible
-            $(
-                $( #[$F_META] )*
-                $F_NAME : Option<$F_TY>,
             )*
         }
     };

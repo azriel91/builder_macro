@@ -261,7 +261,7 @@ macro_rules! parse_struct {
     )
     =>
     {
-        declare_struct_and_builder! {
+        impl_struct_and_builder! {
             purpose: $PURPOSE,
             vis: [ $( $VIS )* ],
             meta: [ $( #[$ITEM_META] )* ],

@@ -335,8 +335,13 @@
 //! [3]: https://doc.rust-lang.org/style/ownership/builders.html#consuming-builders
 //!
 
+// Order is important
 #[macro_use]
-mod declare_struct_and_builder;
+mod declare_structs;
+#[macro_use]
+mod impl_builder;
+#[macro_use]
+mod impl_struct_and_builder;
 #[macro_use]
 mod parse_struct;
 
