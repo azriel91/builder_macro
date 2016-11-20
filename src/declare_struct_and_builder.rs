@@ -1,9 +1,18 @@
-#[doc(hidden)]
 #[macro_export]
+/// The purpose can be either `data` or `object`.
+///
+/// The purpose should be `data` when the generated `build()` method should return
+/// `Result<Struct, &'static str>`. This should be used when the generated struct is to be
+/// constructed from input at runtime.
+///
+/// The purpose should be `object` when the generated `build()` method should return
+/// `Struct`. This should be used when the generated struct is constructed from known values at
+/// compile time.
 macro_rules! declare_struct_and_builder {
     // Implement struct and builder when all attributes have been filtered
     // Non-consuming builder variant
     (
+        purpose: $PURPOSE:ident,
         vis: [ $( $VIS:ident )* ],
         meta: [ $( #[$META:meta] )* ],
         spec: $BUILDER:ident -> $STRUCT:ident,
@@ -82,6 +91,7 @@ macro_rules! declare_struct_and_builder {
 
     // Consuming builder variant
     (
+        purpose: $PURPOSE:ident,
         vis: [ $( $VIS:ident )* ],
         meta: [ $( #[$META:meta] )* ],
         spec: $BUILDER:ident => $STRUCT:ident,

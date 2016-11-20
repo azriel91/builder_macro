@@ -6,12 +6,14 @@ macro_rules! parse_struct {
 
     // Loop through each meta item in SPEC, extract it and prepend it to ITEM_META
     (
+        purpose: $PURPOSE:ident,
         meta: [ $( #[$ITEM_META:meta] )* ],
         spec: #[$NEXT_META:meta] $( $SPEC:tt )+
     )
     =>
     {
         parse_struct! {
+            purpose: $PURPOSE,
             meta: [ $( #[$ITEM_META] )* #[$NEXT_META] ],
             spec: $( $SPEC )+
         }
@@ -35,6 +37,7 @@ macro_rules! parse_struct {
     // This macro adds additional blocks to make parsing easier
     // We match on 'pub' in case the struct and builder should be public
     (
+        purpose: $PURPOSE:ident,
         meta: [ $( #[$ITEM_META:meta] )* ],
         spec: pub $BUILDER:ident $MODE:tt $STRUCT:ident {
             $( $FIELD_SPEC:tt )*
@@ -44,6 +47,7 @@ macro_rules! parse_struct {
     =>
     {
         parse_struct! {
+            purpose: $PURPOSE,
             vis: [ pub ],
             meta: [ $( #[$ITEM_META] )* ],
             spec: $BUILDER $MODE $STRUCT,
@@ -60,6 +64,7 @@ macro_rules! parse_struct {
     // * $MODE:tt matches the builder name
     // * $STRUCT:ident attempts to match the -> or => arrow and fails
     (
+        purpose: $PURPOSE:ident,
         meta: [ $( #[$ITEM_META:meta] )* ],
         spec: $BUILDER:ident $MODE:tt $STRUCT:ident {
             $( $FIELD_SPEC:tt )*
@@ -69,6 +74,7 @@ macro_rules! parse_struct {
     =>
     {
         parse_struct! {
+            purpose: $PURPOSE,
             vis: [],
             meta: [ $( #[$ITEM_META] )* ],
             spec: $BUILDER $MODE $STRUCT,
@@ -82,6 +88,7 @@ macro_rules! parse_struct {
     // Now we have to attempt to wrap each field inside braces {}
     // This macro looks for meta tokens and extracts them into field_wip
     (
+        purpose: $PURPOSE:ident,
         vis: [ $( $VIS:ident )* ],
         meta: [ $( #[$ITEM_META:meta] )* ],
         spec: $BUILDER:ident $MODE:tt $STRUCT:ident,
@@ -105,6 +112,7 @@ macro_rules! parse_struct {
     =>
     {
         parse_struct! {
+            purpose: $PURPOSE,
             vis: [ $( $VIS )* ],
             meta: [ $( #[$ITEM_META] )* ],
             spec: $BUILDER $MODE $STRUCT,
@@ -130,6 +138,7 @@ macro_rules! parse_struct {
     // When we reach here, the meta tokens for field_wip should have all been parsed
     // Therefore we should be able to match on the [pub] field_name: Type = Some(default), pattern
     (
+        purpose: $PURPOSE:ident,
         vis: [ $( $VIS:ident )* ],
         meta: [ $( #[$ITEM_META:meta] )* ],
         spec: $BUILDER:ident $MODE:tt $STRUCT:ident,
@@ -154,6 +163,7 @@ macro_rules! parse_struct {
     =>
     {
         parse_struct! {
+            purpose: $PURPOSE,
             vis: [ $( $VIS )* ],
             meta: [ $( #[$ITEM_META] )* ],
             spec: $BUILDER $MODE $STRUCT,
@@ -180,6 +190,7 @@ macro_rules! parse_struct {
     };
     // public field
     (
+        purpose: $PURPOSE:ident,
         vis: [ $( $VIS:ident )* ],
         meta: [ $( #[$ITEM_META:meta] )* ],
         spec: $BUILDER:ident $MODE:tt $STRUCT:ident,
@@ -204,6 +215,7 @@ macro_rules! parse_struct {
     =>
     {
         parse_struct! {
+            purpose: $PURPOSE,
             vis: [ $( $VIS )* ],
             meta: [ $( #[$ITEM_META] )* ],
             spec: $BUILDER $MODE $STRUCT,
@@ -230,6 +242,7 @@ macro_rules! parse_struct {
     };
 
     (
+        purpose: $PURPOSE:ident,
         vis: [ $( $VIS:ident )* ],
         meta: [ $( #[$ITEM_META:meta] )* ],
         spec: $BUILDER:ident $MODE:tt $STRUCT:ident,
@@ -249,6 +262,7 @@ macro_rules! parse_struct {
     =>
     {
         declare_struct_and_builder! {
+            purpose: $PURPOSE,
             vis: [ $( $VIS )* ],
             meta: [ $( #[$ITEM_META] )* ],
             spec: $BUILDER $MODE $STRUCT,

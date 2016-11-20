@@ -1,6 +1,6 @@
 #![deny(missing_docs)]
 
-//! This crate contains a `builder!` macro to declare a struct and a corresponding builder.
+//! This crate contains a `data_struct!` macro to declare a struct and a corresponding builder.
 //!
 //! The macro is inspired from [jadpole/builder-macro][1], and is designed to remove duplication of
 //! field declaration, as well as generating appropriate setter methods.
@@ -28,7 +28,7 @@
 //! The simplest usage of the builder macro to generate a [non-consuming builder][2] is:
 //!
 //! ```rust,ignore
-//! builder!(BuilderName -> StructName {
+//! data_struct!(BuilderName -> StructName {
 //!     fieldname: Type = Some(default_value), // or None if there is no sensible default
 //! });
 //! ```
@@ -43,7 +43,7 @@
 //! # extern crate builder_macro;
 //! #
 //! # fn main() {
-//! builder!(BuilderName -> StructName {
+//! data_struct!(BuilderName -> StructName {
 //!     value: i32 = Some(1),
 //! });
 //! # }
@@ -111,7 +111,7 @@
 //! }
 //!
 //! // Note: we use => instead of -> for the consuming variant of the builder
-//! builder!(MyStructBuilder => MyStruct {
+//! data_struct!(MyStructBuilder => MyStruct {
 //!     field_trait: Box<Magic> = Some(Box::new(Dust { value: 1 })),
 //!     field_vec: Vec<Box<Magic>> = Some(vec![Box::new(Dust { value: 2 })]),
 //! });
@@ -132,7 +132,7 @@
 //! # extern crate builder_macro;
 //! #
 //! # fn main() {
-//! builder!(MyStructBuilder -> MyStruct {
+//! data_struct!(MyStructBuilder -> MyStruct {
 //!     field_i32: i32 = Some(123),
 //!     field_str: &'static str = Some("abc"),
 //! });
@@ -154,7 +154,7 @@
 //! #
 //! # fn main() {
 //! mod inner {
-//!     builder!(pub MyStructBuilder -> MyStruct {
+//!     data_struct!(pub MyStructBuilder -> MyStruct {
 //!         pub field_i32: i32 = Some(123),
 //!         field_str: &'static str = Some("abc"),
 //!     });
@@ -182,7 +182,7 @@
 //! # extern crate builder_macro;
 //! #
 //! # fn main() {
-//! builder! {
+//! data_struct! {
 //!     pub BuilderName -> StructName {
 //!         /// a_field is an i32 which must be between 0 and 100 inclusive
 //!         pub a_field: i32 = Some(50),
@@ -216,7 +216,7 @@
 //! # fn main() {
 //! // We declare the builder insider a module simply to demonstrate scope
 //! mod inner {
-//!     builder! {
+//!     data_struct! {
 //!         /// StructName is an example struct.
 //!         /// These docs are copied over to the generated struct.
 //!         pub BuilderName -> StructName {
@@ -340,14 +340,19 @@ mod declare_struct_and_builder;
 #[macro_use]
 mod parse_struct;
 
+// We cannot put these macros into submodules because they cannot be re-exported. See discussion:
+// https://github.com/rust-lang/rust/issues/29638
+// https://github.com/rust-lang/rfcs/blob/master/text/0453-macro-reform.md
+
 #[macro_export]
-/// Macro to declare a struct and a corresponding builder. See
-/// [the module documentation](index.html) for more.
-macro_rules! builder {
+/// Macro to declare a struct and a corresponding builder that returns a `Result<T, &'static str>`.
+/// See [the module documentation](index.html) for more.
+macro_rules! data_struct {
     ( $( $SPEC:tt )* )
     =>
     {
         parse_struct! {
+            purpose: data,
             meta: [],
             spec: $( $SPEC )*
         }
@@ -371,7 +376,7 @@ mod test {
 
     #[test]
     fn generates_struct_and_builder_with_defaults() {
-        builder!(MyStructBuilder -> MyStruct {
+        data_struct!(MyStructBuilder -> MyStruct {
             field_i32: i32 = Some(123),
             field_str: &'static str = Some("abc"),
         });
@@ -383,7 +388,7 @@ mod test {
 
     #[test]
     fn generates_struct_and_builder_with_parameters() {
-        builder!(MyStructBuilder -> MyStruct {
+        data_struct!(MyStructBuilder -> MyStruct {
             field_i32: i32 = Some(123),
             field_str: &'static str = Some("abc"),
         });
@@ -399,7 +404,7 @@ mod test {
 
     #[test]
     fn generates_struct_and_builder_with_generic_types() {
-        builder!(MyStructBuilder -> MyStruct {
+        data_struct!(MyStructBuilder -> MyStruct {
             field_vec: Vec<i32> = Some(vec![123]),
         });
 
@@ -416,7 +421,7 @@ mod test {
     #[test]
     fn generates_struct_and_builder_with_traits_using_default_values() {
         // Note: we use => instead of -> for the consuming variant of the builder
-        builder!(MyStructBuilder => MyStruct {
+        data_struct!(MyStructBuilder => MyStruct {
             field_trait: Box<Magic> = Some(Box::new(Dust { value: 1 })),
             field_vec: Vec<Box<Magic>> = Some(vec![Box::new(Dust { value: 2 })]),
         });
@@ -430,7 +435,7 @@ mod test {
     #[test]
     fn generates_struct_and_builder_with_traits_specifying_parameters() {
         // Note: we use => instead of -> for the consuming variant of the builder
-        builder!(MyStructBuilder => MyStruct {
+        data_struct!(MyStructBuilder => MyStruct {
             field_trait: Box<Magic> = None,
             field_vec: Vec<Box<Magic>> = None,
         });
@@ -447,7 +452,7 @@ mod test {
 
     #[test]
     fn generated_build_method_uses_assertions() {
-        builder!(MyStructBuilder -> MyStruct {
+        data_struct!(MyStructBuilder -> MyStruct {
             #[allow(dead_code)]
             field_i32: i32 = Some(123),
         },
@@ -465,7 +470,7 @@ mod test {
 
     #[test]
     fn generated_consuming_build_method_uses_assertions() {
-        builder!(MyStructBuilder => MyStruct {
+        data_struct!(MyStructBuilder => MyStruct {
             #[allow(dead_code)]
             field_i32: i32 = Some(123),
         },
@@ -484,7 +489,7 @@ mod test {
 
     #[test]
     fn generated_consuming_build_method_asserts_on_trait_fields() {
-        builder!(MyStructBuilder => MyStruct {
+        data_struct!(MyStructBuilder => MyStruct {
             #[allow(dead_code)]
             field_trait: Box<Magic> = Some(Box::new(Dust { value: 1 })),
         },
@@ -504,11 +509,11 @@ mod test {
     }
 
     mod visibility_test {
-        builder!(OuterStructBuilder -> OuterStruct { field_i32: i32 = Some(1), });
+        data_struct!(OuterStructBuilder -> OuterStruct { field_i32: i32 = Some(1), });
 
         mod inner {
-            builder!(MyStructBuilder -> MyStruct { field_i32: i32 = Some(1), });
-            builder!(pub InnerStructBuilder -> InnerStruct { pub field_i32: i32 = Some(1), });
+            data_struct!(MyStructBuilder -> MyStruct { field_i32: i32 = Some(1), });
+            data_struct!(pub InnerStructBuilder -> InnerStruct { pub field_i32: i32 = Some(1), });
 
             #[test]
             fn can_access_private_struct_from_within_module() {
