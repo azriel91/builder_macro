@@ -17,15 +17,24 @@ macro_rules! impl_struct_and_builder {
         vis: [ $( $VIS:ident )* ],
         meta: [ $( #[$META:meta] )* ],
         spec: $BUILDER:ident -> $STRUCT:ident,
-        fields: {
+        mandatory_fields: {
             $(
                 {
-                    vis: [ $( $FIELD_VIS:ident )* ],
-                    meta: [ $( #[$F_META:meta] )* ],
-                    spec: $F_NAME:ident: $F_TY:ty = $F_DEFAULT:expr
-                } $(,)*
+                    vis: [ $( $MAN_FIELD_VIS:ident )* ],
+                    meta: [ $( #[$MAN_FIELD_META:meta] )* ],
+                    spec: $MAN_F_NAME:ident: $MAN_F_TY:ty = $MAN_F_DEFAULT:expr
+                },
             )*
-        }
+        },
+        optional_fields: {
+            $(
+                {
+                    vis: [ $( $OPT_FIELD_VIS:ident )* ],
+                    meta: [ $( #[$OPT_FIELD_META:meta] )* ],
+                    spec: $OPT_F_NAME:ident: $OPT_F_TY:ty = $OPT_F_DEFAULT:expr
+                },
+            )*
+        },
         $(, assertions: { $( $ASSERTION:expr; )* } )*
     )
     =>
@@ -37,9 +46,16 @@ macro_rules! impl_struct_and_builder {
             fields: {
                 $(
                     {
-                        vis: [ $( $FIELD_VIS )* ],
-                        meta: [ $( #[$F_META] )* ],
-                        spec: $F_NAME: $F_TY = $F_DEFAULT
+                        vis: [ $( $MAN_FIELD_VIS )* ],
+                        meta: [ $( #[$MAN_FIELD_META] )* ],
+                        spec: $MAN_F_NAME: $MAN_F_TY = $MAN_F_DEFAULT
+                    },
+                )*
+                $(
+                    {
+                        vis: [ $( $OPT_FIELD_VIS )* ],
+                        meta: [ $( #[$OPT_FIELD_META] )* ],
+                        spec: $OPT_F_NAME: $OPT_F_TY = $OPT_F_DEFAULT
                     },
                 )*
             }
@@ -52,7 +68,12 @@ macro_rules! impl_struct_and_builder {
             fields: {
                 $(
                     {
-                        spec: $F_NAME: $F_TY = $F_DEFAULT
+                        spec: $MAN_F_NAME: $MAN_F_TY = $MAN_F_DEFAULT
+                    },
+                )*
+                $(
+                    {
+                        spec: $OPT_F_NAME: $OPT_F_TY = $OPT_F_DEFAULT
                     },
                 )*
             }
@@ -66,15 +87,24 @@ macro_rules! impl_struct_and_builder {
         vis: [ $( $VIS:ident )* ],
         meta: [ $( #[$META:meta] )* ],
         spec: $BUILDER:ident => $STRUCT:ident,
-        fields: {
+        mandatory_fields: {
             $(
                 {
-                    vis: [ $( $FIELD_VIS:ident )* ],
-                    meta: [ $( #[$F_META:meta] )* ],
-                    spec: $F_NAME:ident: $F_TY:ty = $F_DEFAULT:expr
-                } $(,)*
+                    vis: [ $( $MAN_FIELD_VIS:ident )* ],
+                    meta: [ $( #[$MAN_FIELD_META:meta] )* ],
+                    spec: $MAN_F_NAME:ident: $MAN_F_TY:ty = $MAN_F_DEFAULT:expr
+                },
             )*
-        }
+        },
+        optional_fields: {
+            $(
+                {
+                    vis: [ $( $OPT_FIELD_VIS:ident )* ],
+                    meta: [ $( #[$OPT_FIELD_META:meta] )* ],
+                    spec: $OPT_F_NAME:ident: $OPT_F_TY:ty = $OPT_F_DEFAULT:expr
+                },
+            )*
+        },
         $(, assertions: { $( $ASSERTION:expr; )* } )*
     )
     =>
@@ -86,9 +116,16 @@ macro_rules! impl_struct_and_builder {
             fields: {
                 $(
                     {
-                        vis: [ $( $FIELD_VIS )* ],
-                        meta: [ $( #[$F_META] )* ],
-                        spec: $F_NAME: $F_TY = $F_DEFAULT
+                        vis: [ $( $MAN_FIELD_VIS )* ],
+                        meta: [ $( #[$MAN_FIELD_META] )* ],
+                        spec: $MAN_F_NAME: $MAN_F_TY = $MAN_F_DEFAULT
+                    },
+                )*
+                $(
+                    {
+                        vis: [ $( $OPT_FIELD_VIS )* ],
+                        meta: [ $( #[$OPT_FIELD_META] )* ],
+                        spec: $OPT_F_NAME: $OPT_F_TY = $OPT_F_DEFAULT
                     },
                 )*
             }
@@ -101,7 +138,12 @@ macro_rules! impl_struct_and_builder {
             fields: {
                 $(
                     {
-                        spec: $F_NAME: $F_TY = $F_DEFAULT
+                        spec: $MAN_F_NAME: $MAN_F_TY = $MAN_F_DEFAULT
+                    },
+                )*
+                $(
+                    {
+                        spec: $OPT_F_NAME: $OPT_F_TY = $OPT_F_DEFAULT
                     },
                 )*
             }

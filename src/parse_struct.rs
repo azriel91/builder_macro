@@ -51,7 +51,8 @@ macro_rules! parse_struct {
             vis: [ pub ],
             meta: [ $( #[$ITEM_META] )* ],
             spec: $BUILDER $MODE $STRUCT,
-            fields: {},
+            mandatory_fields: {},
+            optional_fields: {},
             field_wip: { meta: [] },
             parser_wip: { $( $FIELD_SPEC )* }
             $(, assertions: { $( $ASSERTION; )* } )*
@@ -78,7 +79,8 @@ macro_rules! parse_struct {
             vis: [],
             meta: [ $( #[$ITEM_META] )* ],
             spec: $BUILDER $MODE $STRUCT,
-            fields: {},
+            mandatory_fields: {},
+            optional_fields: {},
             field_wip: { meta: [] },
             parser_wip: { $( $FIELD_SPEC )* }
             $(, assertions: { $( $ASSERTION; )* } )*
@@ -92,12 +94,21 @@ macro_rules! parse_struct {
         vis: [ $( $VIS:ident )* ],
         meta: [ $( #[$ITEM_META:meta] )* ],
         spec: $BUILDER:ident $MODE:tt $STRUCT:ident,
-        fields: {
+        mandatory_fields: {
             $(
                 {
-                    vis: [ $( $FIELD_VIS:ident )* ],
-                    meta: [ $( #[$FIELD_META:meta] )* ],
-                    spec: $( $FIELD_SPEC:tt )+
+                    vis: [ $( $MAN_FIELD_VIS:ident )* ],
+                    meta: [ $( #[$MAN_FIELD_META:meta] )* ],
+                    spec: $( $MAN_FIELD_SPEC:tt )+
+                },
+            )*
+        },
+        optional_fields: {
+            $(
+                {
+                    vis: [ $( $OPT_FIELD_VIS:ident )* ],
+                    meta: [ $( #[$OPT_FIELD_META:meta] )* ],
+                    spec: $( $OPT_FIELD_SPEC:tt )+
                 },
             )*
         },
@@ -116,12 +127,21 @@ macro_rules! parse_struct {
             vis: [ $( $VIS )* ],
             meta: [ $( #[$ITEM_META] )* ],
             spec: $BUILDER $MODE $STRUCT,
-            fields: {
+            mandatory_fields: {
                 $(
                     {
-                        vis: [ $( $FIELD_VIS )* ],
-                        meta: [ $( #[$FIELD_META] )* ],
-                        spec: $( $FIELD_SPEC )+
+                        vis: [ $( $MAN_FIELD_VIS )* ],
+                        meta: [ $( #[$MAN_FIELD_META] )* ],
+                        spec: $( $MAN_FIELD_SPEC )+
+                    },
+                )*
+            },
+            optional_fields: {
+                $(
+                    {
+                        vis: [ $( $OPT_FIELD_VIS )* ],
+                        meta: [ $( #[$OPT_FIELD_META] )* ],
+                        spec: $( $OPT_FIELD_SPEC )+
                     },
                 )*
             },
@@ -137,17 +157,27 @@ macro_rules! parse_struct {
 
     // When we reach here, the meta tokens for field_wip should have all been parsed
     // Therefore we should be able to match on the [pub] field_name: Type = Some(default), pattern
+    // Mandatory field
     (
         purpose: $PURPOSE:ident,
         vis: [ $( $VIS:ident )* ],
         meta: [ $( #[$ITEM_META:meta] )* ],
         spec: $BUILDER:ident $MODE:tt $STRUCT:ident,
-        fields: {
+        mandatory_fields: {
             $(
                 {
-                    vis: [ $( $FIELD_VIS:ident )* ],
-                    meta: [ $( #[$FIELD_META:meta] )* ],
-                    spec: $( $FIELD_SPEC:tt )+
+                    vis: [ $( $MAN_FIELD_VIS:ident )* ],
+                    meta: [ $( #[$MAN_FIELD_META:meta] )* ],
+                    spec: $( $MAN_FIELD_SPEC:tt )+
+                },
+            )*
+        },
+        optional_fields: {
+            $(
+                {
+                    vis: [ $( $OPT_FIELD_VIS:ident )* ],
+                    meta: [ $( #[$OPT_FIELD_META:meta] )* ],
+                    spec: $( $OPT_FIELD_SPEC:tt )+
                 },
             )*
         },
@@ -155,7 +185,7 @@ macro_rules! parse_struct {
             meta: [ $( #[$FIELD_WIP_META:meta] )* ]
         },
         parser_wip: {
-            $F_NAME:ident: $F_TY:ty = $F_DEFAULT:expr,
+            $F_NAME:ident: $F_TY:ty = None,
             $( $SPEC_TAIL:tt )*
         }
         $(, assertions: { $( $ASSERTION:expr; )* } )*
@@ -167,18 +197,97 @@ macro_rules! parse_struct {
             vis: [ $( $VIS )* ],
             meta: [ $( #[$ITEM_META] )* ],
             spec: $BUILDER $MODE $STRUCT,
-            fields: {
+            mandatory_fields: {
                 $(
                     {
-                        vis: [ $( $FIELD_VIS )* ],
-                        meta: [ $( #[$FIELD_META] )* ],
-                        spec: $( $FIELD_SPEC )+
+                        vis: [ $( $MAN_FIELD_VIS )* ],
+                        meta: [ $( #[$MAN_FIELD_META] )* ],
+                        spec: $( $MAN_FIELD_SPEC )+
                     },
                 )*
                 {
                     vis: [],
                     meta: [ $( #[$FIELD_WIP_META] )* ],
-                    spec: $F_NAME: $F_TY = $F_DEFAULT
+                    spec: $F_NAME: $F_TY = None
+                },
+            },
+            optional_fields: {
+                $(
+                    {
+                        vis: [ $( $OPT_FIELD_VIS )* ],
+                        meta: [ $( #[$OPT_FIELD_META] )* ],
+                        spec: $( $OPT_FIELD_SPEC )+
+                    },
+                )*
+            },
+            field_wip: { meta: [] },
+            parser_wip: {
+                $( $SPEC_TAIL )*
+            }
+            $(, assertions: { $( $ASSERTION; )* } )*
+        }
+    };
+    // Optional field
+    (
+        purpose: $PURPOSE:ident,
+        vis: [ $( $VIS:ident )* ],
+        meta: [ $( #[$ITEM_META:meta] )* ],
+        spec: $BUILDER:ident $MODE:tt $STRUCT:ident,
+        mandatory_fields: {
+            $(
+                {
+                    vis: [ $( $MAN_FIELD_VIS:ident )* ],
+                    meta: [ $( #[$MAN_FIELD_META:meta] )* ],
+                    spec: $( $MAN_FIELD_SPEC:tt )+
+                },
+            )*
+        },
+        optional_fields: {
+            $(
+                {
+                    vis: [ $( $OPT_FIELD_VIS:ident )* ],
+                    meta: [ $( #[$OPT_FIELD_META:meta] )* ],
+                    spec: $( $OPT_FIELD_SPEC:tt )+
+                },
+            )*
+        },
+        field_wip: {
+            meta: [ $( #[$FIELD_WIP_META:meta] )* ]
+        },
+        parser_wip: {
+            $F_NAME:ident: $F_TY:ty = Some($F_DEFAULT:expr),
+            $( $SPEC_TAIL:tt )*
+        }
+        $(, assertions: { $( $ASSERTION:expr; )* } )*
+    )
+    =>
+    {
+        parse_struct! {
+            purpose: $PURPOSE,
+            vis: [ $( $VIS )* ],
+            meta: [ $( #[$ITEM_META] )* ],
+            spec: $BUILDER $MODE $STRUCT,
+            mandatory_fields: {
+                $(
+                    {
+                        vis: [ $( $MAN_FIELD_VIS )* ],
+                        meta: [ $( #[$MAN_FIELD_META] )* ],
+                        spec: $( $MAN_FIELD_SPEC )+
+                    },
+                )*
+            },
+            optional_fields: {
+                $(
+                    {
+                        vis: [ $( $OPT_FIELD_VIS )* ],
+                        meta: [ $( #[$OPT_FIELD_META] )* ],
+                        spec: $( $OPT_FIELD_SPEC )+
+                    },
+                )*
+                {
+                    vis: [],
+                    meta: [ $( #[$FIELD_WIP_META] )* ],
+                    spec: $F_NAME: $F_TY = Some($F_DEFAULT)
                 },
             },
             field_wip: { meta: [] },
@@ -188,18 +297,27 @@ macro_rules! parse_struct {
             $(, assertions: { $( $ASSERTION; )* } )*
         }
     };
-    // public field
+    // public mandatory field
     (
         purpose: $PURPOSE:ident,
         vis: [ $( $VIS:ident )* ],
         meta: [ $( #[$ITEM_META:meta] )* ],
         spec: $BUILDER:ident $MODE:tt $STRUCT:ident,
-        fields: {
+        mandatory_fields: {
             $(
                 {
-                    vis: [ $( $FIELD_VIS:ident )* ],
-                    meta: [ $( #[$FIELD_META:meta] )* ],
-                    spec: $( $FIELD_SPEC:tt )+
+                    vis: [ $( $MAN_FIELD_VIS:ident )* ],
+                    meta: [ $( #[$MAN_FIELD_META:meta] )* ],
+                    spec: $( $MAN_FIELD_SPEC:tt )+
+                },
+            )*
+        },
+        optional_fields: {
+            $(
+                {
+                    vis: [ $( $OPT_FIELD_VIS:ident )* ],
+                    meta: [ $( #[$OPT_FIELD_META:meta] )* ],
+                    spec: $( $OPT_FIELD_SPEC:tt )+
                 },
             )*
         },
@@ -207,7 +325,7 @@ macro_rules! parse_struct {
             meta: [ $( #[$FIELD_WIP_META:meta] )* ]
         },
         parser_wip: {
-            pub $F_NAME:ident: $F_TY:ty = $F_DEFAULT:expr,
+            pub $F_NAME:ident: $F_TY:ty = None,
             $( $SPEC_TAIL:tt )*
         }
         $(, assertions: { $( $ASSERTION:expr; )* } )*
@@ -219,18 +337,97 @@ macro_rules! parse_struct {
             vis: [ $( $VIS )* ],
             meta: [ $( #[$ITEM_META] )* ],
             spec: $BUILDER $MODE $STRUCT,
-            fields: {
+            mandatory_fields: {
                 $(
                     {
-                        vis: [ $( $FIELD_VIS )* ],
-                        meta: [ $( #[$FIELD_META] )* ],
-                        spec: $( $FIELD_SPEC )+
+                        vis: [ $( $MAN_FIELD_VIS )* ],
+                        meta: [ $( #[$MAN_FIELD_META] )* ],
+                        spec: $( $MAN_FIELD_SPEC )+
                     },
                 )*
                 {
                     vis: [ pub ],
                     meta: [ $( #[$FIELD_WIP_META] )* ],
-                    spec: $F_NAME: $F_TY = $F_DEFAULT
+                    spec: $F_NAME: $F_TY = None
+                },
+            },
+            optional_fields: {
+                $(
+                    {
+                        vis: [ $( $OPT_FIELD_VIS )* ],
+                        meta: [ $( #[$OPT_FIELD_META] )* ],
+                        spec: $( $OPT_FIELD_SPEC )+
+                    },
+                )*
+            },
+            field_wip: { meta: [] },
+            parser_wip: {
+                $( $SPEC_TAIL )*
+            }
+            $(, assertions: { $( $ASSERTION; )* } )*
+        }
+    };
+    // public optional field
+    (
+        purpose: $PURPOSE:ident,
+        vis: [ $( $VIS:ident )* ],
+        meta: [ $( #[$ITEM_META:meta] )* ],
+        spec: $BUILDER:ident $MODE:tt $STRUCT:ident,
+        mandatory_fields: {
+            $(
+                {
+                    vis: [ $( $MAN_FIELD_VIS:ident )* ],
+                    meta: [ $( #[$MAN_FIELD_META:meta] )* ],
+                    spec: $( $MAN_FIELD_SPEC:tt )+
+                },
+            )*
+        },
+        optional_fields: {
+            $(
+                {
+                    vis: [ $( $OPT_FIELD_VIS:ident )* ],
+                    meta: [ $( #[$OPT_FIELD_META:meta] )* ],
+                    spec: $( $OPT_FIELD_SPEC:tt )+
+                },
+            )*
+        },
+        field_wip: {
+            meta: [ $( #[$FIELD_WIP_META:meta] )* ]
+        },
+        parser_wip: {
+            pub $F_NAME:ident: $F_TY:ty = Some($F_DEFAULT:expr),
+            $( $SPEC_TAIL:tt )*
+        }
+        $(, assertions: { $( $ASSERTION:expr; )* } )*
+    )
+    =>
+    {
+        parse_struct! {
+            purpose: $PURPOSE,
+            vis: [ $( $VIS )* ],
+            meta: [ $( #[$ITEM_META] )* ],
+            spec: $BUILDER $MODE $STRUCT,
+            mandatory_fields: {
+                $(
+                    {
+                        vis: [ $( $MAN_FIELD_VIS )* ],
+                        meta: [ $( #[$MAN_FIELD_META] )* ],
+                        spec: $( $MAN_FIELD_SPEC )+
+                    },
+                )*
+            },
+            optional_fields: {
+                $(
+                    {
+                        vis: [ $( $OPT_FIELD_VIS )* ],
+                        meta: [ $( #[$OPT_FIELD_META] )* ],
+                        spec: $( $OPT_FIELD_SPEC )+
+                    },
+                )*
+                {
+                    vis: [ pub ],
+                    meta: [ $( #[$FIELD_WIP_META] )* ],
+                    spec: $F_NAME: $F_TY = Some($F_DEFAULT)
                 },
             },
             field_wip: { meta: [] },
@@ -246,13 +443,22 @@ macro_rules! parse_struct {
         vis: [ $( $VIS:ident )* ],
         meta: [ $( #[$ITEM_META:meta] )* ],
         spec: $BUILDER:ident $MODE:tt $STRUCT:ident,
-        fields: {
+        mandatory_fields: {
             $(
                 {
-                    vis: [ $( $FIELD_VIS:ident )* ],
-                    meta: [ $( #[$FIELD_META:meta] )* ],
-                    spec: $F_NAME:ident: $F_TY:ty = $F_DEFAULT:expr $(,)*
-                } $(,)*
+                    vis: [ $( $MAN_FIELD_VIS:ident )* ],
+                    meta: [ $( #[$MAN_FIELD_META:meta] )* ],
+                    spec: $( $MAN_FIELD_SPEC:tt )+
+                },
+            )*
+        },
+        optional_fields: {
+            $(
+                {
+                    vis: [ $( $OPT_FIELD_VIS:ident )* ],
+                    meta: [ $( #[$OPT_FIELD_META:meta] )* ],
+                    spec: $( $OPT_FIELD_SPEC:tt )+
+                },
             )*
         },
         field_wip: { meta: [] },
@@ -266,15 +472,24 @@ macro_rules! parse_struct {
             vis: [ $( $VIS )* ],
             meta: [ $( #[$ITEM_META] )* ],
             spec: $BUILDER $MODE $STRUCT,
-            fields: {
+            mandatory_fields: {
                 $(
                     {
-                        vis: [ $( $FIELD_VIS )* ],
-                        meta: [ $( #[$FIELD_META] )* ],
-                        spec: $F_NAME: $F_TY = $F_DEFAULT
+                        vis: [ $( $MAN_FIELD_VIS )* ],
+                        meta: [ $( #[$MAN_FIELD_META] )* ],
+                        spec: $( $MAN_FIELD_SPEC )+
                     },
                 )*
-            }
+            },
+            optional_fields: {
+                $(
+                    {
+                        vis: [ $( $OPT_FIELD_VIS )* ],
+                        meta: [ $( #[$OPT_FIELD_META] )* ],
+                        spec: $( $OPT_FIELD_SPEC )+
+                    },
+                )*
+            },
             $(, assertions: { $( $ASSERTION; )* } )*
         }
     };
