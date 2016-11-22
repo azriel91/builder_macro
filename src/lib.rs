@@ -1,4 +1,5 @@
 #![deny(missing_docs)]
+#![feature(trace_macros)]
 
 //! This crate contains two macros to declare a struct and a corresponding builder.
 //!
@@ -208,10 +209,10 @@
 //! # fn main() {
 //! data_struct! {
 //!     pub BuilderName -> StructName {
-//!         /// a_field is an i32 which must be between 0 and 100 inclusive
-//!         pub a_field: i32 = Some(50),
 //!         #[allow(dead_code)]
 //!         a_private_field: &'static str = None,
+//!         /// a_field is an i32 which must be between 0 and 100 inclusive
+//!         pub a_field: i32 = Some(50),
 //!     }, assertions: {
 //!         assert!(a_field >= 0);
 //!         assert!(a_field <= 100);
@@ -220,8 +221,8 @@
 //!     }
 //! }
 //!
-//! let result_1 = BuilderName::new().a_private_field("non-empty string").build();
-//! let result_2 = BuilderName::new().a_private_field("").build();
+//! let result_1 = BuilderName::new("non-empty string").a_private_field().build();
+//! let result_2 = BuilderName::new("").build();
 //!
 //! assert!(result_1.is_ok());
 //! assert_eq!(result_2.err(),
@@ -244,13 +245,13 @@
 //!         /// StructName is an example struct.
 //!         /// These docs are copied over to the generated struct.
 //!         pub BuilderName -> StructName {
-//!             /// a_field is an i32 which must be between 0 and 100 inclusive
-//!             pub a_field: i32 = Some(50),
-//!
 //!             // None means no default value, a value must be specified when building
 //!             // meta attributes are copied over to the struct's fields
 //!             #[allow(dead_code)]
 //!             a_private_field: &'static str = None,
+//!
+//!             /// a_field is an i32 which must be between 0 and 100 inclusive
+//!             pub a_field: i32 = Some(50),
 //!         }, assertions: {
 //!             assert!(a_field >= 0);
 //!             assert!(a_field <= 100);
@@ -260,8 +261,7 @@
 //!     }
 //! }
 //!
-//! let my_struct = inner::BuilderName::new()
-//!     .a_private_field("I must set this to a non-empty string")
+//! let my_struct = inner::BuilderName::new("I must set this to a non-empty string")
 //!     .build()
 //!     .unwrap();
 //!
@@ -433,7 +433,45 @@ mod test {
         }
 
         #[test]
-        fn generates_struct_and_builder_with_parameters() {
+        fn generates_struct_and_builder_with_no_defaults_and_parameters() {
+            data_struct!(MyStructBuilder -> MyStruct {
+                field_i32: i32 = None,
+                field_str: &'static str = None,
+            });
+
+            let my_struct = MyStructBuilder::new(456, "str")
+                .build()
+                .unwrap();
+            assert_eq!(my_struct.field_i32, 456);
+            assert_eq!(my_struct.field_str, "str");
+        }
+
+        #[test]
+        fn generates_struct_and_builder_with_mixed_defaults_and_parameters() {
+            data_struct!(MyStructBuilder -> MyStruct {
+                field_i32: i32 = None,
+                field_str: &'static str = Some("abc"),
+            });
+
+            let my_struct = MyStructBuilder::new(456).build().unwrap();
+            assert_eq!(my_struct.field_i32, 456);
+            assert_eq!(my_struct.field_str, "abc");
+        }
+
+        #[test]
+        fn generates_struct_and_builder_with_mixed_defaults_and_specified_parameters() {
+            data_struct!(MyStructBuilder -> MyStruct {
+                field_i32: i32 = None,
+                field_str: &'static str = Some("abc"),
+            });
+
+            let my_struct = MyStructBuilder::new(456).field_str("str").build().unwrap();
+            assert_eq!(my_struct.field_i32, 456);
+            assert_eq!(my_struct.field_str, "str");
+        }
+
+        #[test]
+        fn generates_struct_and_builder_with_defaults_and_parameters() {
             data_struct!(MyStructBuilder -> MyStruct {
                 field_i32: i32 = Some(123),
                 field_str: &'static str = Some("abc"),
@@ -486,9 +524,8 @@ mod test {
                 field_vec: Vec<Box<Magic>> = None,
             });
 
-            let mut my_struct = MyStructBuilder::new()
-                .field_trait(Box::new(Dust { value: 1 }))
-                .field_vec(vec![Box::new(Dust { value: 2 })])
+            let mut my_struct = MyStructBuilder::new(Box::new(Dust { value: 1 }),
+                                                     vec![Box::new(Dust { value: 2 })])
                 .build()
                 .unwrap();
 
@@ -605,7 +642,44 @@ mod test {
         }
 
         #[test]
-        fn generates_struct_and_builder_with_parameters() {
+        fn generates_struct_and_builder_with_no_defaults_and_parameters() {
+            object_struct!(MyStructBuilder -> MyStruct {
+                field_i32: i32 = None,
+                field_str: &'static str = None,
+            });
+
+            let my_struct = MyStructBuilder::new(456, "str")
+                .build();
+            assert_eq!(my_struct.field_i32, 456);
+            assert_eq!(my_struct.field_str, "str");
+        }
+
+        #[test]
+        fn generates_struct_and_builder_with_mixed_defaults_and_parameters() {
+            object_struct!(MyStructBuilder -> MyStruct {
+                field_i32: i32 = None,
+                field_str: &'static str = Some("abc"),
+            });
+
+            let my_struct = MyStructBuilder::new(456).build();
+            assert_eq!(my_struct.field_i32, 456);
+            assert_eq!(my_struct.field_str, "abc");
+        }
+
+        #[test]
+        fn generates_struct_and_builder_with_mixed_defaults_and_specified_parameters() {
+            object_struct!(MyStructBuilder -> MyStruct {
+                field_i32: i32 = None,
+                field_str: &'static str = Some("abc"),
+            });
+
+            let my_struct = MyStructBuilder::new(456).field_str("str").build();
+            assert_eq!(my_struct.field_i32, 456);
+            assert_eq!(my_struct.field_str, "str");
+        }
+
+        #[test]
+        fn generates_struct_and_builder_with_defaults_and_parameters() {
             object_struct!(MyStructBuilder -> MyStruct {
                 field_i32: i32 = Some(123),
                 field_str: &'static str = Some("abc"),
@@ -656,10 +730,9 @@ mod test {
                 field_vec: Vec<Box<Magic>> = None,
             });
 
-            let mut my_struct = MyStructBuilder::new()
-                .field_trait(Box::new(Dust { value: 1 }))
-                .field_vec(vec![Box::new(Dust { value: 2 })])
-                .build();
+            let field_trait: Box<Magic> = Box::new(Dust { value: 1 });
+            let field_vec: Vec<Box<Magic>> = vec![Box::new(Dust { value: 2 })];
+            let mut my_struct = MyStructBuilder::new(field_trait, field_vec).build();
 
             assert_eq!(my_struct.field_trait.abracadabra(), 1);
             assert_eq!(my_struct.field_vec[0].abracadabra(), 2);

@@ -65,12 +65,14 @@ macro_rules! impl_struct_and_builder {
             purpose: $PURPOSE,
             variant: non_consuming,
             spec: $BUILDER -> $STRUCT,
-            fields: {
+            mandatory_fields: {
                 $(
                     {
                         spec: $MAN_F_NAME: $MAN_F_TY = $MAN_F_DEFAULT
                     },
                 )*
+            },
+            optional_fields: {
                 $(
                     {
                         spec: $OPT_F_NAME: $OPT_F_TY = $OPT_F_DEFAULT
@@ -135,12 +137,14 @@ macro_rules! impl_struct_and_builder {
             purpose: $PURPOSE,
             variant: consuming,
             spec: $BUILDER -> $STRUCT,
-            fields: {
+            mandatory_fields: {
                 $(
                     {
                         spec: $MAN_F_NAME: $MAN_F_TY = $MAN_F_DEFAULT
                     },
                 )*
+            },
+            optional_fields: {
                 $(
                     {
                         spec: $OPT_F_NAME: $OPT_F_TY = $OPT_F_DEFAULT
