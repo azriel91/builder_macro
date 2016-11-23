@@ -1,5 +1,4 @@
 #![deny(missing_docs)]
-#![feature(trace_macros)]
 
 //! This crate contains two macros to declare a struct and a corresponding builder.
 //!
@@ -221,7 +220,7 @@
 //!     }
 //! }
 //!
-//! let result_1 = BuilderName::new("non-empty string").a_private_field().build();
+//! let result_1 = BuilderName::new("non-empty string").build();
 //! let result_2 = BuilderName::new("").build();
 //!
 //! assert!(result_1.is_ok());
@@ -471,6 +470,28 @@ mod test {
         }
 
         #[test]
+        fn generates_struct_and_builder_with_mixed_defaults_maintains_order() {
+            data_struct!(
+                #[derive(Debug)]
+                MyStructBuilder -> MyStruct {
+                field_a: i32 = None,
+                field_b: &'static str = Some("abc"),
+                field_c: i32 = Some(456),
+                field_d: &'static str = None,
+            });
+
+            let my_struct = MyStructBuilder::new(123, "def").build().unwrap();
+            assert_eq!(my_struct.field_a, 123);
+            assert_eq!(my_struct.field_b, "abc");
+            assert_eq!(my_struct.field_c, 456);
+            assert_eq!(my_struct.field_d, "def");
+
+            assert_eq!(
+                "MyStruct { field_a: 123, field_b: \"abc\", field_c: 456, field_d: \"def\" }",
+                format!("{:?}", my_struct));
+        }
+
+        #[test]
         fn generates_struct_and_builder_with_defaults_and_parameters() {
             data_struct!(MyStructBuilder -> MyStruct {
                 field_i32: i32 = Some(123),
@@ -676,6 +697,28 @@ mod test {
             let my_struct = MyStructBuilder::new(456).field_str("str").build();
             assert_eq!(my_struct.field_i32, 456);
             assert_eq!(my_struct.field_str, "str");
+        }
+
+        #[test]
+        fn generates_struct_and_builder_with_mixed_defaults_maintains_order() {
+            object_struct!(
+                #[derive(Debug)]
+                MyStructBuilder -> MyStruct {
+                field_a: i32 = None,
+                field_b: &'static str = Some("abc"),
+                field_c: i32 = Some(456),
+                field_d: &'static str = None,
+            });
+
+            let my_struct = MyStructBuilder::new(123, "def").build();
+            assert_eq!(my_struct.field_a, 123);
+            assert_eq!(my_struct.field_b, "abc");
+            assert_eq!(my_struct.field_c, 456);
+            assert_eq!(my_struct.field_d, "def");
+
+            assert_eq!(
+                "MyStruct { field_a: 123, field_b: \"abc\", field_c: 456, field_d: \"def\" }",
+                format!("{:?}", my_struct));
         }
 
         #[test]

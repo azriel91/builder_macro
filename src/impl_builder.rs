@@ -2,22 +2,151 @@
 #[macro_export]
 /// Implements the setters and build method for the consuming variant of the builder.
 macro_rules! impl_builder {
+    (
+        @constructor
+        spec: $BUILDER:ident -> $STRUCT:ident,
+        fields: {
+            $( $FIELDS_SPEC:tt )*
+        }
+    )
+    =>
+    {
+        impl_builder!(
+            @constructor
+            spec: $BUILDER -> $STRUCT,
+            separator: [],
+            params: [],
+            assignments: [],
+            fields: {
+                $( $FIELDS_SPEC )*
+            }
+        );
+    };
+
+    // Declare parameters for constructor if it is mandatory
+    // Specify the comma if declaring the first parameter, which may or may not be required, and
+    // then subsequently always specify comma.
+    //
+    // Must skip over all non-required fields for constructor params.
+    // Must not skip over any parameters in the assignment.
+    (
+        @constructor
+        spec: $BUILDER:ident -> $STRUCT:ident,
+        separator: [ $( $SEPARATOR:tt )* ],
+        params: [ $( { $( $PARAMS:tt )* }, )* ],
+        assignments: [ $( { $( $ASSIGNMENTS:tt )* }, )* ],
+        fields: {
+            {
+                req: false,
+                spec: $F_NAME:ident: $F_TY:ty = $F_DEFAULT:expr
+            },
+            $( $FIELDS_SPEC:tt )*
+        }
+    )
+    =>
+    {
+        impl_builder!(
+            @constructor
+            spec: $BUILDER -> $STRUCT,
+            separator: [ $( $SEPARATOR )* ],
+            params: [ $( { $( $PARAMS )* }, )* ],
+            assignments: [ $( { $( $ASSIGNMENTS )* }, )* { $F_NAME: $F_DEFAULT, }, ],
+            fields: {
+                $( $FIELDS_SPEC )*
+            }
+        );
+    };
+    (
+        @constructor
+        spec: $BUILDER:ident -> $STRUCT:ident,
+        separator: [ $( $SEPARATOR:tt )* ],
+        params: [ $( { $( $PARAMS:tt )* }, )* ],
+        assignments: [ $( { $( $ASSIGNMENTS:tt )* }, )* ],
+        fields: {
+            {
+                req: true,
+                spec: $F_NAME:ident: $F_TY:ty = $F_DEFAULT:expr
+            },
+            $( $FIELDS_SPEC:tt )*
+        }
+    )
+    =>
+    {
+        impl_builder!(
+            @constructor
+            spec: $BUILDER -> $STRUCT,
+            separator: [ , ],
+            params: [ $( { $( $PARAMS )* }, )* { $( $SEPARATOR )* $F_NAME: $F_TY }, ],
+            assignments: [ $( { $( $ASSIGNMENTS )* }, )* { $F_NAME: Some($F_NAME), }, ],
+            fields: {
+                $( $FIELDS_SPEC )*
+            }
+        );
+    };
+    (
+        @constructor
+        spec: $BUILDER:ident -> $STRUCT:ident,
+        separator: [ $( $SEPARATOR:tt )* ],
+        params: [ $( { $( $PARAMS:tt )* }, )* ],
+        assignments: [ $( { $( $ASSIGNMENTS:tt )* }, )* ],
+        fields: {}
+    )
+    =>
+    {
+        /// Construct the builder
+        pub fn new( $( $( $PARAMS )* )* ) -> $BUILDER {
+            $BUILDER {
+                $( $( $ASSIGNMENTS )* )*
+            }
+        }
+    };
+
+    // Generate setter for non-mandatory fields
+    (
+        @setter
+        variant: non_consuming,
+        req: false,
+        spec: $F_NAME:ident: $F_TY:ty = $F_DEFAULT:expr
+    ) => {
+        // allow dead code because the user may be using the field default
+        #[allow(dead_code)]
+        /// Auto-generated setter
+        pub fn $F_NAME(&mut self, value: $F_TY) -> &mut Self {
+            self.$F_NAME = Some(value);
+            self
+        }
+    };
+    (
+        @setter
+        variant: consuming,
+        req: false,
+        spec: $F_NAME:ident: $F_TY:ty = $F_DEFAULT:expr
+    ) => {
+        // allow dead code because the user may be using the field default
+        #[allow(dead_code)]
+        /// Auto-generated setter
+        pub fn $F_NAME(mut self, value: $F_TY) -> Self {
+            self.$F_NAME = Some(value);
+            self
+        }
+    };
+    (
+        @setter
+        variant: $VARIANT:ident,
+        req: true,
+        spec: $F_NAME:ident: $F_TY:ty = $F_DEFAULT:expr
+    ) => ();
+
     // Non-consuming
     (
         purpose: data,
         variant: non_consuming,
         spec: $BUILDER:ident -> $STRUCT:ident,
-        mandatory_fields: {
+        fields: {
             $(
                 {
-                    spec: $MAN_F_NAME:ident: $MAN_F_TY:ty = $MAN_F_DEFAULT:expr
-                },
-            )*
-        },
-        optional_fields: {
-            $(
-                {
-                    spec: $OPT_F_NAME:ident: $OPT_F_TY:ty = $OPT_F_DEFAULT:expr
+                    req: $FIELD_REQ:ident,
+                    spec: $F_NAME:ident: $F_TY:ty = $F_DEFAULT:expr
                 },
             )*
         }
@@ -26,20 +155,24 @@ macro_rules! impl_builder {
     =>
     {
         impl $BUILDER {
-            /// Construct the builder
-            pub fn new($( $MAN_F_NAME: $MAN_F_TY ),*) -> $BUILDER {
-                $BUILDER {
-                    $( $MAN_F_NAME: Some($MAN_F_NAME) ),*
-                    $( $OPT_F_NAME: $OPT_F_DEFAULT ),*
+            impl_builder!(
+                @constructor
+                spec: $BUILDER -> $STRUCT,
+                fields: {
+                    $(
+                        {
+                            req: $FIELD_REQ,
+                            spec: $F_NAME: $F_TY = $F_DEFAULT
+                        },
+                    )*
                 }
-            }
+            );
 
             // Nested macro call should be stable for format!
             // https://github.com/rust-lang/rust/blob/1.12.0/src/libsyntax_ext/format.rs#L684-L687
             /// Build the struct
             pub fn build(&self) -> Result<$STRUCT, &'static str> {
-                $( let $MAN_F_NAME = self.$MAN_F_NAME.clone().unwrap(); )*
-                $( let $OPT_F_NAME = self.$OPT_F_NAME.clone().unwrap(); )*
+                $( let $F_NAME = self.$F_NAME.clone().unwrap(); )*
 
                 $(
                     use std::panic;
@@ -50,19 +183,17 @@ macro_rules! impl_builder {
                 )*
 
                 Ok($STRUCT {
-                    $( $MAN_F_NAME: $MAN_F_NAME ),*
-                    $( $OPT_F_NAME: $OPT_F_NAME ),*
+                    $( $F_NAME: $F_NAME ),*
                 })
             }
 
             $(
-                // allow dead code because the user may be using the field default
-                #[allow(dead_code)]
-                /// Auto-generated setter
-                pub fn $OPT_F_NAME(&mut self, value: $OPT_F_TY) -> &mut Self {
-                    self.$OPT_F_NAME = Some(value);
-                    self
-                }
+                impl_builder!(
+                    @setter
+                    variant: non_consuming,
+                    req: $FIELD_REQ,
+                    spec: $F_NAME: $F_TY = $F_DEFAULT
+                );
             )*
         }
     };
@@ -70,17 +201,11 @@ macro_rules! impl_builder {
         purpose: object,
         variant: non_consuming,
         spec: $BUILDER:ident -> $STRUCT:ident,
-        mandatory_fields: {
+        fields: {
             $(
                 {
-                    spec: $MAN_F_NAME:ident: $MAN_F_TY:ty = $MAN_F_DEFAULT:expr
-                },
-            )*
-        },
-        optional_fields: {
-            $(
-                {
-                    spec: $OPT_F_NAME:ident: $OPT_F_TY:ty = $OPT_F_DEFAULT:expr
+                    req: $FIELD_REQ:ident,
+                    spec: $F_NAME:ident: $F_TY:ty = $F_DEFAULT:expr
                 },
             )*
         }
@@ -89,37 +214,39 @@ macro_rules! impl_builder {
     =>
     {
         impl $BUILDER {
-            /// Construct the builder
-            pub fn new($( $MAN_F_NAME: $MAN_F_TY ),*) -> $BUILDER {
-                $BUILDER {
-                    $( $MAN_F_NAME: Some($MAN_F_NAME) ),*
-                    $( $OPT_F_NAME: $OPT_F_DEFAULT ),*
+            impl_builder!(
+                @constructor
+                spec: $BUILDER -> $STRUCT,
+                fields: {
+                    $(
+                        {
+                            req: $FIELD_REQ,
+                            spec: $F_NAME: $F_TY = $F_DEFAULT
+                        },
+                    )*
                 }
-            }
+            );
 
             // Nested macro call should be stable for format!
             // https://github.com/rust-lang/rust/blob/1.12.0/src/libsyntax_ext/format.rs#L684-L687
             /// Build the struct
             pub fn build(&self) -> $STRUCT {
-                $( let $MAN_F_NAME = self.$MAN_F_NAME.clone().unwrap(); )*
-                $( let $OPT_F_NAME = self.$OPT_F_NAME.clone().unwrap(); )*
+                $( let $F_NAME = self.$F_NAME.clone().unwrap(); )*
 
                 $( $( $ASSERTION; )* )*
 
                 $STRUCT {
-                    $( $MAN_F_NAME: $MAN_F_NAME ),*
-                    $( $OPT_F_NAME: $OPT_F_NAME ),*
+                    $( $F_NAME: $F_NAME ),*
                 }
             }
 
             $(
-                // allow dead code because the user may be using the field default
-                #[allow(dead_code)]
-                /// Auto-generated setter
-                pub fn $OPT_F_NAME(&mut self, value: $OPT_F_TY) -> &mut Self {
-                    self.$OPT_F_NAME = Some(value);
-                    self
-                }
+                impl_builder!(
+                    @setter
+                    variant: non_consuming,
+                    req: $FIELD_REQ,
+                    spec: $F_NAME: $F_TY = $F_DEFAULT
+                );
             )*
         }
     };
@@ -129,17 +256,11 @@ macro_rules! impl_builder {
         purpose: data,
         variant: consuming,
         spec: $BUILDER:ident -> $STRUCT:ident,
-        mandatory_fields: {
+        fields: {
             $(
                 {
-                    spec: $MAN_F_NAME:ident: $MAN_F_TY:ty = $MAN_F_DEFAULT:expr
-                },
-            )*
-        },
-        optional_fields: {
-            $(
-                {
-                    spec: $OPT_F_NAME:ident: $OPT_F_TY:ty = $OPT_F_DEFAULT:expr
+                    req: $FIELD_REQ:ident,
+                    spec: $F_NAME:ident: $F_TY:ty = $F_DEFAULT:expr
                 },
             )*
         }
@@ -148,13 +269,18 @@ macro_rules! impl_builder {
     =>
     {
         impl $BUILDER {
-            /// Construct the builder
-            pub fn new($( $MAN_F_NAME: $MAN_F_TY ),*) -> $BUILDER {
-                $BUILDER {
-                    $( $MAN_F_NAME: Some($MAN_F_NAME) ),*
-                    $( $OPT_F_NAME: $OPT_F_DEFAULT ),*
+            impl_builder!(
+                @constructor
+                spec: $BUILDER -> $STRUCT,
+                fields: {
+                    $(
+                        {
+                            req: $FIELD_REQ,
+                            spec: $F_NAME: $F_TY = $F_DEFAULT
+                        },
+                    )*
                 }
-            }
+            );
 
             // Nested macro call should be stable for format!
             // https://github.com/rust-lang/rust/blob/1.12.0/src/libsyntax_ext/format.rs#L684-L687
@@ -163,8 +289,7 @@ macro_rules! impl_builder {
             pub fn build(self) -> Result<$STRUCT, &'static str> {
                 // mutability is necessary for assertions on trait fields to work, otherwise the
                 // compiler fails with unwind safety not being satisfied
-                $( let mut $MAN_F_NAME = self.$MAN_F_NAME.unwrap(); )*
-                $( let mut $OPT_F_NAME = self.$OPT_F_NAME.unwrap(); )*
+                $( let mut $F_NAME = self.$F_NAME.unwrap(); )*
 
                 $(
                     use std::panic::{self, AssertUnwindSafe};
@@ -175,19 +300,17 @@ macro_rules! impl_builder {
                 )*
 
                 Ok($STRUCT {
-                    $( $MAN_F_NAME: $MAN_F_NAME ),*
-                    $( $OPT_F_NAME: $OPT_F_NAME ),*
+                    $( $F_NAME: $F_NAME ),*
                 })
             }
 
             $(
-                // allow dead code because the user may be using the field default
-                #[allow(dead_code)]
-                /// Auto-generated setter
-                pub fn $OPT_F_NAME(mut self, value: $OPT_F_TY) -> Self {
-                    self.$OPT_F_NAME = Some(value);
-                    self
-                }
+                impl_builder!(
+                    @setter
+                    variant: consuming,
+                    req: $FIELD_REQ,
+                    spec: $F_NAME: $F_TY = $F_DEFAULT
+                );
             )*
         }
     };
@@ -195,17 +318,11 @@ macro_rules! impl_builder {
         purpose: object,
         variant: consuming,
         spec: $BUILDER:ident -> $STRUCT:ident,
-        mandatory_fields: {
+        fields: {
             $(
                 {
-                    spec: $MAN_F_NAME:ident: $MAN_F_TY:ty = $MAN_F_DEFAULT:expr
-                },
-            )*
-        },
-        optional_fields: {
-            $(
-                {
-                    spec: $OPT_F_NAME:ident: $OPT_F_TY:ty = $OPT_F_DEFAULT:expr
+                    req: $FIELD_REQ:ident,
+                    spec: $F_NAME:ident: $F_TY:ty = $F_DEFAULT:expr
                 },
             )*
         }
@@ -214,13 +331,18 @@ macro_rules! impl_builder {
     =>
     {
         impl $BUILDER {
-            /// Construct the builder
-            pub fn new($( $MAN_F_NAME: $MAN_F_TY ),*) -> $BUILDER {
-                $BUILDER {
-                    $( $MAN_F_NAME: Some($MAN_F_NAME) ),*
-                    $( $OPT_F_NAME: $OPT_F_DEFAULT ),*
+            impl_builder!(
+                @constructor
+                spec: $BUILDER -> $STRUCT,
+                fields: {
+                    $(
+                        {
+                            req: $FIELD_REQ,
+                            spec: $F_NAME: $F_TY = $F_DEFAULT
+                        },
+                    )*
                 }
-            }
+            );
 
             // Nested macro call should be stable for format!
             // https://github.com/rust-lang/rust/blob/1.12.0/src/libsyntax_ext/format.rs#L684-L687
@@ -229,25 +351,22 @@ macro_rules! impl_builder {
             pub fn build(self) -> $STRUCT {
                 // mutability is necessary for assertions on trait fields to work, otherwise the
                 // compiler fails with unwind safety not being satisfied
-                $( let mut $MAN_F_NAME = self.$MAN_F_NAME.unwrap(); )*
-                $( let mut $OPT_F_NAME = self.$OPT_F_NAME.unwrap(); )*
+                $( let mut $F_NAME = self.$F_NAME.unwrap(); )*
 
                 $( $( $ASSERTION; )* )*
 
                 $STRUCT {
-                    $( $MAN_F_NAME: $MAN_F_NAME ),*
-                    $( $OPT_F_NAME: $OPT_F_NAME ),*
+                    $( $F_NAME: $F_NAME ),*
                 }
             }
 
             $(
-                // allow dead code because the user may be using the field default
-                #[allow(dead_code)]
-                /// Auto-generated setter
-                pub fn $OPT_F_NAME(mut self, value: $OPT_F_TY) -> Self {
-                    self.$OPT_F_NAME = Some(value);
-                    self
-                }
+                impl_builder!(
+                    @setter
+                    variant: consuming,
+                    req: $FIELD_REQ,
+                    spec: $F_NAME: $F_TY = $F_DEFAULT
+                );
             )*
         }
     };
