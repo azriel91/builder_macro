@@ -8,10 +8,9 @@ macro_rules! declare_structs {
         fields: {
             $(
                 {
-                    req: $FIELD_REQ:ident,
                     vis: [ $( $FIELD_VIS:ident )* ],
                     meta: [ $( #[$F_META:meta] )* ],
-                    spec: $F_NAME:ident: $F_TY:ty = $F_DEFAULT:expr
+                    spec: $F_NAME:ident: $F_TY:ty
                 } $(,)*
             )*
         }

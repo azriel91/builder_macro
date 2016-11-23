@@ -53,7 +53,8 @@
 //!
 //! ```rust,ignore
 //! data_struct!(BuilderName -> StructName {
-//!     fieldname: Type = Some(default_value), // or None if there is no sensible default
+//!     fieldname: Type = default_value, // or
+//!     fieldname: Type, // for no default value
 //! });
 //! ```
 //!
@@ -68,7 +69,7 @@
 //! #
 //! # fn main() {
 //! data_struct!(BuilderName -> StructName {
-//!     value: i32 = Some(1),
+//!     value: i32 = 1,
 //! });
 //! # }
 //! ```
@@ -136,8 +137,8 @@
 //!
 //! // Note: we use => instead of -> for the consuming variant of the builder
 //! data_struct!(MyStructBuilder => MyStruct {
-//!     field_trait: Box<Magic> = Some(Box::new(Dust { value: 1 })),
-//!     field_vec: Vec<Box<Magic>> = Some(vec![Box::new(Dust { value: 2 })]),
+//!     field_trait: Box<Magic> = Box::new(Dust { value: 1 }),
+//!     field_vec: Vec<Box<Magic>> = vec![Box::new(Dust { value: 2 })],
 //! });
 //!
 //! let mut my_struct = MyStructBuilder::new().build().unwrap();
@@ -157,8 +158,8 @@
 //! #
 //! # fn main() {
 //! data_struct!(MyStructBuilder -> MyStruct {
-//!     field_i32: i32 = Some(123),
-//!     field_str: &'static str = Some("abc"),
+//!     field_i32: i32 = 123,
+//!     field_str: &'static str = "abc",
 //! });
 //!
 //! let my_struct = MyStructBuilder::new()
@@ -179,8 +180,8 @@
 //! # fn main() {
 //! mod inner {
 //!     data_struct!(pub MyStructBuilder -> MyStruct {
-//!         pub field_i32: i32 = Some(123),
-//!         field_str: &'static str = Some("abc"),
+//!         pub field_i32: i32 = 123,
+//!         field_str: &'static str = "abc",
 //!     });
 //! }
 //!
@@ -209,9 +210,9 @@
 //! data_struct! {
 //!     pub BuilderName -> StructName {
 //!         #[allow(dead_code)]
-//!         a_private_field: &'static str = None,
+//!         a_private_field: &'static str,
 //!         /// a_field is an i32 which must be between 0 and 100 inclusive
-//!         pub a_field: i32 = Some(50),
+//!         pub a_field: i32 = 50,
 //!     }, assertions: {
 //!         assert!(a_field >= 0);
 //!         assert!(a_field <= 100);
@@ -247,10 +248,10 @@
 //!             // None means no default value, a value must be specified when building
 //!             // meta attributes are copied over to the struct's fields
 //!             #[allow(dead_code)]
-//!             a_private_field: &'static str = None,
+//!             a_private_field: &'static str,
 //!
 //!             /// a_field is an i32 which must be between 0 and 100 inclusive
-//!             pub a_field: i32 = Some(50),
+//!             pub a_field: i32 = 50,
 //!         }, assertions: {
 //!             assert!(a_field >= 0);
 //!             assert!(a_field <= 100);
@@ -422,8 +423,8 @@ mod test {
         #[test]
         fn generates_struct_and_builder_with_defaults() {
             data_struct!(MyStructBuilder -> MyStruct {
-                field_i32: i32 = Some(123),
-                field_str: &'static str = Some("abc"),
+                field_i32: i32 = 123,
+                field_str: &'static str = "abc",
             });
 
             let my_struct = MyStructBuilder::new().build().unwrap();
@@ -434,8 +435,8 @@ mod test {
         #[test]
         fn generates_struct_and_builder_with_no_defaults_and_parameters() {
             data_struct!(MyStructBuilder -> MyStruct {
-                field_i32: i32 = None,
-                field_str: &'static str = None,
+                field_i32: i32,
+                field_str: &'static str,
             });
 
             let my_struct = MyStructBuilder::new(456, "str")
@@ -448,8 +449,8 @@ mod test {
         #[test]
         fn generates_struct_and_builder_with_mixed_defaults_and_parameters() {
             data_struct!(MyStructBuilder -> MyStruct {
-                field_i32: i32 = None,
-                field_str: &'static str = Some("abc"),
+                field_i32: i32,
+                field_str: &'static str = "abc",
             });
 
             let my_struct = MyStructBuilder::new(456).build().unwrap();
@@ -460,8 +461,8 @@ mod test {
         #[test]
         fn generates_struct_and_builder_with_mixed_defaults_and_specified_parameters() {
             data_struct!(MyStructBuilder -> MyStruct {
-                field_i32: i32 = None,
-                field_str: &'static str = Some("abc"),
+                field_i32: i32,
+                field_str: &'static str = "abc",
             });
 
             let my_struct = MyStructBuilder::new(456).field_str("str").build().unwrap();
@@ -474,10 +475,10 @@ mod test {
             data_struct!(
                 #[derive(Debug)]
                 MyStructBuilder -> MyStruct {
-                field_a: i32 = None,
-                field_b: &'static str = Some("abc"),
-                field_c: i32 = Some(456),
-                field_d: &'static str = None,
+                field_a: i32,
+                field_b: &'static str = "abc",
+                field_c: i32 = 456,
+                field_d: &'static str,
             });
 
             let my_struct = MyStructBuilder::new(123, "def").build().unwrap();
@@ -494,8 +495,8 @@ mod test {
         #[test]
         fn generates_struct_and_builder_with_defaults_and_parameters() {
             data_struct!(MyStructBuilder -> MyStruct {
-                field_i32: i32 = Some(123),
-                field_str: &'static str = Some("abc"),
+                field_i32: i32 = 123,
+                field_str: &'static str = "abc",
             });
 
             let my_struct = MyStructBuilder::new()
@@ -510,7 +511,7 @@ mod test {
         #[test]
         fn generates_struct_and_builder_with_generic_types() {
             data_struct!(MyStructBuilder -> MyStruct {
-                field_vec: Vec<i32> = Some(vec![123]),
+                field_vec: Vec<i32> = vec![123],
             });
 
             let my_struct = MyStructBuilder::new().build().unwrap();
@@ -527,8 +528,8 @@ mod test {
         fn generates_struct_and_builder_with_traits_using_default_values() {
             // Note: we use => instead of -> for the consuming variant of the builder
             data_struct!(MyStructBuilder => MyStruct {
-                field_trait: Box<Magic> = Some(Box::new(Dust { value: 1 })),
-                field_vec: Vec<Box<Magic>> = Some(vec![Box::new(Dust { value: 2 })]),
+                field_trait: Box<Magic> = Box::new(Dust { value: 1 }),
+                field_vec: Vec<Box<Magic>> = vec![Box::new(Dust { value: 2 })],
             });
 
             let mut my_struct = MyStructBuilder::new().build().unwrap();
@@ -541,8 +542,8 @@ mod test {
         fn generates_struct_and_builder_with_traits_specifying_parameters() {
             // Note: we use => instead of -> for the consuming variant of the builder
             data_struct!(MyStructBuilder => MyStruct {
-                field_trait: Box<Magic> = None,
-                field_vec: Vec<Box<Magic>> = None,
+                field_trait: Box<Magic>,
+                field_vec: Vec<Box<Magic>>,
             });
 
             let mut my_struct = MyStructBuilder::new(Box::new(Dust { value: 1 }),
@@ -558,7 +559,7 @@ mod test {
         fn generated_build_method_uses_assertions() {
             data_struct!(MyStructBuilder -> MyStruct {
                 #[allow(dead_code)]
-                field_i32: i32 = Some(123),
+                field_i32: i32 = 123,
             },
             assertions: {
                 assert!(field_i32 > 0);
@@ -576,7 +577,7 @@ mod test {
         fn generated_consuming_build_method_uses_assertions() {
             data_struct!(MyStructBuilder => MyStruct {
                 #[allow(dead_code)]
-                field_i32: i32 = Some(123),
+                field_i32: i32 = 123,
             },
             assertions: {
                 assert!(field_i32 == 99);
@@ -595,7 +596,7 @@ mod test {
         fn generated_consuming_build_method_asserts_on_trait_fields() {
             data_struct!(MyStructBuilder => MyStruct {
                 #[allow(dead_code)]
-                field_trait: Box<Magic> = Some(Box::new(Dust { value: 1 })),
+                field_trait: Box<Magic> = Box::new(Dust { value: 1 }),
             },
             assertions: {
                 assert_eq!(field_trait.abracadabra(), 99);
@@ -613,11 +614,11 @@ mod test {
         }
 
         mod visibility_test {
-            data_struct!(OuterStructBuilder -> OuterStruct { field_i32: i32 = Some(1), });
+            data_struct!(OuterStructBuilder -> OuterStruct { field_i32: i32 = 1, });
 
             mod inner {
-                data_struct!(MyStructBuilder -> MyStruct { field_i32: i32 = Some(1), });
-                data_struct!(pub InnerStructBuilder -> InnerStruct { pub field_i32: i32 = Some(1), });
+                data_struct!(MyStructBuilder -> MyStruct { field_i32: i32 = 1, });
+                data_struct!(pub InnerStructBuilder -> InnerStruct { pub field_i32: i32 = 1, });
 
                 #[test]
                 fn can_access_private_struct_from_within_module() {
@@ -653,8 +654,8 @@ mod test {
         #[test]
         fn generates_struct_and_builder_with_defaults() {
             object_struct!(MyStructBuilder -> MyStruct {
-                field_i32: i32 = Some(123),
-                field_str: &'static str = Some("abc"),
+                field_i32: i32 = 123,
+                field_str: &'static str = "abc",
             });
 
             let my_struct = MyStructBuilder::new().build();
@@ -665,8 +666,8 @@ mod test {
         #[test]
         fn generates_struct_and_builder_with_no_defaults_and_parameters() {
             object_struct!(MyStructBuilder -> MyStruct {
-                field_i32: i32 = None,
-                field_str: &'static str = None,
+                field_i32: i32,
+                field_str: &'static str,
             });
 
             let my_struct = MyStructBuilder::new(456, "str")
@@ -678,8 +679,8 @@ mod test {
         #[test]
         fn generates_struct_and_builder_with_mixed_defaults_and_parameters() {
             object_struct!(MyStructBuilder -> MyStruct {
-                field_i32: i32 = None,
-                field_str: &'static str = Some("abc"),
+                field_i32: i32,
+                field_str: &'static str = "abc",
             });
 
             let my_struct = MyStructBuilder::new(456).build();
@@ -690,8 +691,8 @@ mod test {
         #[test]
         fn generates_struct_and_builder_with_mixed_defaults_and_specified_parameters() {
             object_struct!(MyStructBuilder -> MyStruct {
-                field_i32: i32 = None,
-                field_str: &'static str = Some("abc"),
+                field_i32: i32,
+                field_str: &'static str = "abc",
             });
 
             let my_struct = MyStructBuilder::new(456).field_str("str").build();
@@ -704,10 +705,10 @@ mod test {
             object_struct!(
                 #[derive(Debug)]
                 MyStructBuilder -> MyStruct {
-                field_a: i32 = None,
-                field_b: &'static str = Some("abc"),
-                field_c: i32 = Some(456),
-                field_d: &'static str = None,
+                field_a: i32,
+                field_b: &'static str = "abc",
+                field_c: i32 = 456,
+                field_d: &'static str,
             });
 
             let my_struct = MyStructBuilder::new(123, "def").build();
@@ -724,8 +725,8 @@ mod test {
         #[test]
         fn generates_struct_and_builder_with_defaults_and_parameters() {
             object_struct!(MyStructBuilder -> MyStruct {
-                field_i32: i32 = Some(123),
-                field_str: &'static str = Some("abc"),
+                field_i32: i32 = 123,
+                field_str: &'static str = "abc",
             });
 
             let my_struct = MyStructBuilder::new()
@@ -739,7 +740,7 @@ mod test {
         #[test]
         fn generates_struct_and_builder_with_generic_types() {
             object_struct!(MyStructBuilder -> MyStruct {
-                field_vec: Vec<i32> = Some(vec![123]),
+                field_vec: Vec<i32> = vec![123],
             });
 
             let my_struct = MyStructBuilder::new().build();
@@ -755,8 +756,8 @@ mod test {
         fn generates_struct_and_builder_with_traits_using_default_values() {
             // Note: we use => instead of -> for the consuming variant of the builder
             object_struct!(MyStructBuilder => MyStruct {
-                field_trait: Box<Magic> = Some(Box::new(Dust { value: 1 })),
-                field_vec: Vec<Box<Magic>> = Some(vec![Box::new(Dust { value: 2 })]),
+                field_trait: Box<Magic> = Box::new(Dust { value: 1 }),
+                field_vec: Vec<Box<Magic>> = vec![Box::new(Dust { value: 2 })],
             });
 
             let mut my_struct = MyStructBuilder::new().build();
@@ -769,8 +770,8 @@ mod test {
         fn generates_struct_and_builder_with_traits_specifying_parameters() {
             // Note: we use => instead of -> for the consuming variant of the builder
             object_struct!(MyStructBuilder => MyStruct {
-                field_trait: Box<Magic> = None,
-                field_vec: Vec<Box<Magic>> = None,
+                field_trait: Box<Magic>,
+                field_vec: Vec<Box<Magic>>,
             });
 
             let field_trait: Box<Magic> = Box::new(Dust { value: 1 });
@@ -786,7 +787,7 @@ mod test {
         fn generated_build_method_uses_assertions() {
             object_struct!(MyStructBuilder -> MyStruct {
                 #[allow(dead_code)]
-                field_i32: i32 = Some(123),
+                field_i32: i32 = 123,
             },
             assertions: {
                 assert!(field_i32 > 0);
@@ -800,7 +801,7 @@ mod test {
         fn generated_consuming_build_method_uses_assertions() {
             object_struct!(MyStructBuilder => MyStruct {
                 #[allow(dead_code)]
-                field_i32: i32 = Some(123),
+                field_i32: i32 = 123,
             },
             assertions: {
                 assert!(field_i32 == 99);
@@ -814,7 +815,7 @@ mod test {
         fn generated_consuming_build_method_asserts_on_trait_fields() {
             object_struct!(MyStructBuilder => MyStruct {
                 #[allow(dead_code)]
-                field_trait: Box<Magic> = Some(Box::new(Dust { value: 1 })),
+                field_trait: Box<Magic> = Box::new(Dust { value: 1 }),
             },
             assertions: {
                 assert_eq!(field_trait.abracadabra(), 99);
@@ -824,11 +825,11 @@ mod test {
         }
 
         mod visibility_test {
-            object_struct!(OuterStructBuilder -> OuterStruct { field_i32: i32 = Some(1), });
+            object_struct!(OuterStructBuilder -> OuterStruct { field_i32: i32 = 1, });
 
             mod inner {
-                object_struct!(MyStructBuilder -> MyStruct { field_i32: i32 = Some(1), });
-                object_struct!(pub InnerStructBuilder -> InnerStruct { pub field_i32: i32 = Some(1), });
+                object_struct!(MyStructBuilder -> MyStruct { field_i32: i32 = 1, });
+                object_struct!(pub InnerStructBuilder -> InnerStruct { pub field_i32: i32 = 1, });
 
                 #[test]
                 fn can_access_private_struct_from_within_module() {

@@ -98,6 +98,7 @@ macro_rules! parse_struct {
                     req: $FIELD_REQ:ident,
                     vis: [ $( $FIELD_VIS:ident )* ],
                     meta: [ $( #[$FIELD_META:meta] )* ],
+                    default: $FIELD_DEFAULT:expr,
                     spec: $( $FIELD_SPEC:tt )+
                 },
             )*
@@ -123,6 +124,7 @@ macro_rules! parse_struct {
                         req: $FIELD_REQ,
                         vis: [ $( $FIELD_VIS )* ],
                         meta: [ $( #[$FIELD_META] )* ],
+                        default: $FIELD_DEFAULT,
                         spec: $( $FIELD_SPEC )+
                     },
                 )*
@@ -151,6 +153,7 @@ macro_rules! parse_struct {
                     req: $FIELD_REQ:ident,
                     vis: [ $( $FIELD_VIS:ident )* ],
                     meta: [ $( #[$FIELD_META:meta] )* ],
+                    default: $FIELD_DEFAULT:expr,
                     spec: $( $FIELD_SPEC:tt )+
                 },
             )*
@@ -159,7 +162,7 @@ macro_rules! parse_struct {
             meta: [ $( #[$FIELD_WIP_META:meta] )* ]
         },
         parser_wip: {
-            $F_NAME:ident: $F_TY:ty = None,
+            $F_NAME:ident: $F_TY:ty,
             $( $SPEC_TAIL:tt )*
         }
         $(, assertions: { $( $ASSERTION:expr; )* } )*
@@ -177,6 +180,7 @@ macro_rules! parse_struct {
                         req: $FIELD_REQ,
                         vis: [ $( $FIELD_VIS )* ],
                         meta: [ $( #[$FIELD_META] )* ],
+                        default: $FIELD_DEFAULT,
                         spec: $( $FIELD_SPEC )+
                     },
                 )*
@@ -184,7 +188,8 @@ macro_rules! parse_struct {
                     req: true,
                     vis: [],
                     meta: [ $( #[$FIELD_WIP_META] )* ],
-                    spec: $F_NAME: $F_TY = None
+                    default: None,
+                    spec: $F_NAME: $F_TY
                 },
             },
             field_wip: { meta: [] },
@@ -206,6 +211,7 @@ macro_rules! parse_struct {
                     req: $FIELD_REQ:ident,
                     vis: [ $( $FIELD_VIS:ident )* ],
                     meta: [ $( #[$FIELD_META:meta] )* ],
+                    default: $FIELD_DEFAULT:expr,
                     spec: $( $FIELD_SPEC:tt )+
                 },
             )*
@@ -214,7 +220,7 @@ macro_rules! parse_struct {
             meta: [ $( #[$FIELD_WIP_META:meta] )* ]
         },
         parser_wip: {
-            $F_NAME:ident: $F_TY:ty = Some($F_DEFAULT:expr),
+            $F_NAME:ident: $F_TY:ty = $F_DEFAULT:expr,
             $( $SPEC_TAIL:tt )*
         }
         $(, assertions: { $( $ASSERTION:expr; )* } )*
@@ -232,6 +238,7 @@ macro_rules! parse_struct {
                         req: $FIELD_REQ,
                         vis: [ $( $FIELD_VIS )* ],
                         meta: [ $( #[$FIELD_META] )* ],
+                        default: $FIELD_DEFAULT,
                         spec: $( $FIELD_SPEC )+
                     },
                 )*
@@ -239,7 +246,8 @@ macro_rules! parse_struct {
                     req: false,
                     vis: [],
                     meta: [ $( #[$FIELD_WIP_META] )* ],
-                    spec: $F_NAME: $F_TY = Some($F_DEFAULT)
+                    default: $F_DEFAULT,
+                    spec: $F_NAME: $F_TY
                 },
             },
             field_wip: { meta: [] },
@@ -261,6 +269,7 @@ macro_rules! parse_struct {
                     req: $FIELD_REQ:ident,
                     vis: [ $( $FIELD_VIS:ident )* ],
                     meta: [ $( #[$FIELD_META:meta] )* ],
+                    default: $FIELD_DEFAULT:expr,
                     spec: $( $FIELD_SPEC:tt )+
                 },
             )*
@@ -269,7 +278,7 @@ macro_rules! parse_struct {
             meta: [ $( #[$FIELD_WIP_META:meta] )* ]
         },
         parser_wip: {
-            pub $F_NAME:ident: $F_TY:ty = None,
+            pub $F_NAME:ident: $F_TY:ty,
             $( $SPEC_TAIL:tt )*
         }
         $(, assertions: { $( $ASSERTION:expr; )* } )*
@@ -287,6 +296,7 @@ macro_rules! parse_struct {
                         req: $FIELD_REQ,
                         vis: [ $( $FIELD_VIS )* ],
                         meta: [ $( #[$FIELD_META] )* ],
+                        default: $FIELD_DEFAULT,
                         spec: $( $FIELD_SPEC )+
                     },
                 )*
@@ -294,7 +304,8 @@ macro_rules! parse_struct {
                     req: true,
                     vis: [ pub ],
                     meta: [ $( #[$FIELD_WIP_META] )* ],
-                    spec: $F_NAME: $F_TY = None
+                    default: None,
+                    spec: $F_NAME: $F_TY
                 },
             }
             field_wip: { meta: [] },
@@ -316,6 +327,7 @@ macro_rules! parse_struct {
                     req: $FIELD_REQ:ident,
                     vis: [ $( $FIELD_VIS:ident )* ],
                     meta: [ $( #[$FIELD_META:meta] )* ],
+                    default: $FIELD_DEFAULT:expr,
                     spec: $( $FIELD_SPEC:tt )+
                 },
             )*
@@ -324,7 +336,7 @@ macro_rules! parse_struct {
             meta: [ $( #[$FIELD_WIP_META:meta] )* ]
         },
         parser_wip: {
-            pub $F_NAME:ident: $F_TY:ty = Some($F_DEFAULT:expr),
+            pub $F_NAME:ident: $F_TY:ty = $F_DEFAULT:expr,
             $( $SPEC_TAIL:tt )*
         }
         $(, assertions: { $( $ASSERTION:expr; )* } )*
@@ -342,6 +354,7 @@ macro_rules! parse_struct {
                         req: $FIELD_REQ,
                         vis: [ $( $FIELD_VIS )* ],
                         meta: [ $( #[$FIELD_META] )* ],
+                        default: $FIELD_DEFAULT,
                         spec: $( $FIELD_SPEC )+
                     },
                 )*
@@ -349,7 +362,8 @@ macro_rules! parse_struct {
                     req: false,
                     vis: [ pub ],
                     meta: [ $( #[$FIELD_WIP_META] )* ],
-                    spec: $F_NAME: $F_TY = Some($F_DEFAULT)
+                    default: $F_DEFAULT,
+                    spec: $F_NAME: $F_TY
                 },
             },
             field_wip: { meta: [] },
@@ -371,6 +385,7 @@ macro_rules! parse_struct {
                     req: $FIELD_REQ:ident,
                     vis: [ $( $FIELD_VIS:ident )* ],
                     meta: [ $( #[$FIELD_META:meta] )* ],
+                    default: $FIELD_DEFAULT:expr,
                     spec: $( $FIELD_SPEC:tt )+
                 },
             )*
@@ -392,6 +407,7 @@ macro_rules! parse_struct {
                         req: $FIELD_REQ,
                         vis: [ $( $FIELD_VIS )* ],
                         meta: [ $( #[$FIELD_META] )* ],
+                        default: $FIELD_DEFAULT,
                         spec: $( $FIELD_SPEC )+
                     },
                 )*

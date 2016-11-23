@@ -38,7 +38,8 @@ macro_rules! impl_builder {
         fields: {
             {
                 req: false,
-                spec: $F_NAME:ident: $F_TY:ty = $F_DEFAULT:expr
+                default: $FIELD_DEFAULT:expr,
+                spec: $F_NAME:ident: $F_TY:ty
             },
             $( $FIELDS_SPEC:tt )*
         }
@@ -50,7 +51,7 @@ macro_rules! impl_builder {
             spec: $BUILDER -> $STRUCT,
             separator: [ $( $SEPARATOR )* ],
             params: [ $( { $( $PARAMS )* }, )* ],
-            assignments: [ $( { $( $ASSIGNMENTS )* }, )* { $F_NAME: $F_DEFAULT, }, ],
+            assignments: [ $( { $( $ASSIGNMENTS )* }, )* { $F_NAME: Some($FIELD_DEFAULT), }, ],
             fields: {
                 $( $FIELDS_SPEC )*
             }
@@ -65,7 +66,8 @@ macro_rules! impl_builder {
         fields: {
             {
                 req: true,
-                spec: $F_NAME:ident: $F_TY:ty = $F_DEFAULT:expr
+                default: $FIELD_DEFAULT:expr,
+                spec: $F_NAME:ident: $F_TY:ty
             },
             $( $FIELDS_SPEC:tt )*
         }
@@ -106,7 +108,8 @@ macro_rules! impl_builder {
         @setter
         variant: non_consuming,
         req: false,
-        spec: $F_NAME:ident: $F_TY:ty = $F_DEFAULT:expr
+        default: $FIELD_DEFAULT:expr,
+        spec: $F_NAME:ident: $F_TY:ty
     ) => {
         // allow dead code because the user may be using the field default
         #[allow(dead_code)]
@@ -120,7 +123,8 @@ macro_rules! impl_builder {
         @setter
         variant: consuming,
         req: false,
-        spec: $F_NAME:ident: $F_TY:ty = $F_DEFAULT:expr
+        default: $FIELD_DEFAULT:expr,
+        spec: $F_NAME:ident: $F_TY:ty
     ) => {
         // allow dead code because the user may be using the field default
         #[allow(dead_code)]
@@ -134,7 +138,8 @@ macro_rules! impl_builder {
         @setter
         variant: $VARIANT:ident,
         req: true,
-        spec: $F_NAME:ident: $F_TY:ty = $F_DEFAULT:expr
+        default: $FIELD_DEFAULT:expr,
+        spec: $F_NAME:ident: $F_TY:ty
     ) => ();
 
     // Non-consuming
@@ -146,7 +151,8 @@ macro_rules! impl_builder {
             $(
                 {
                     req: $FIELD_REQ:ident,
-                    spec: $F_NAME:ident: $F_TY:ty = $F_DEFAULT:expr
+                    default: $FIELD_DEFAULT:expr,
+                    spec: $F_NAME:ident: $F_TY:ty
                 },
             )*
         }
@@ -162,7 +168,8 @@ macro_rules! impl_builder {
                     $(
                         {
                             req: $FIELD_REQ,
-                            spec: $F_NAME: $F_TY = $F_DEFAULT
+                            default: $FIELD_DEFAULT,
+                            spec: $F_NAME: $F_TY
                         },
                     )*
                 }
@@ -192,7 +199,8 @@ macro_rules! impl_builder {
                     @setter
                     variant: non_consuming,
                     req: $FIELD_REQ,
-                    spec: $F_NAME: $F_TY = $F_DEFAULT
+                    default: $FIELD_DEFAULT,
+                    spec: $F_NAME: $F_TY
                 );
             )*
         }
@@ -205,7 +213,8 @@ macro_rules! impl_builder {
             $(
                 {
                     req: $FIELD_REQ:ident,
-                    spec: $F_NAME:ident: $F_TY:ty = $F_DEFAULT:expr
+                    default: $FIELD_DEFAULT:expr,
+                    spec: $F_NAME:ident: $F_TY:ty
                 },
             )*
         }
@@ -221,7 +230,8 @@ macro_rules! impl_builder {
                     $(
                         {
                             req: $FIELD_REQ,
-                            spec: $F_NAME: $F_TY = $F_DEFAULT
+                            default: $FIELD_DEFAULT,
+                            spec: $F_NAME: $F_TY
                         },
                     )*
                 }
@@ -245,7 +255,8 @@ macro_rules! impl_builder {
                     @setter
                     variant: non_consuming,
                     req: $FIELD_REQ,
-                    spec: $F_NAME: $F_TY = $F_DEFAULT
+                    default: $FIELD_DEFAULT,
+                    spec: $F_NAME: $F_TY
                 );
             )*
         }
@@ -260,7 +271,8 @@ macro_rules! impl_builder {
             $(
                 {
                     req: $FIELD_REQ:ident,
-                    spec: $F_NAME:ident: $F_TY:ty = $F_DEFAULT:expr
+                    default: $FIELD_DEFAULT:expr,
+                    spec: $F_NAME:ident: $F_TY:ty
                 },
             )*
         }
@@ -276,7 +288,8 @@ macro_rules! impl_builder {
                     $(
                         {
                             req: $FIELD_REQ,
-                            spec: $F_NAME: $F_TY = $F_DEFAULT
+                            default: $FIELD_DEFAULT,
+                            spec: $F_NAME: $F_TY
                         },
                     )*
                 }
@@ -309,7 +322,8 @@ macro_rules! impl_builder {
                     @setter
                     variant: consuming,
                     req: $FIELD_REQ,
-                    spec: $F_NAME: $F_TY = $F_DEFAULT
+                    default: $FIELD_DEFAULT,
+                    spec: $F_NAME: $F_TY
                 );
             )*
         }
@@ -322,7 +336,8 @@ macro_rules! impl_builder {
             $(
                 {
                     req: $FIELD_REQ:ident,
-                    spec: $F_NAME:ident: $F_TY:ty = $F_DEFAULT:expr
+                    default: $FIELD_DEFAULT:expr,
+                    spec: $F_NAME:ident: $F_TY:ty
                 },
             )*
         }
@@ -338,7 +353,8 @@ macro_rules! impl_builder {
                     $(
                         {
                             req: $FIELD_REQ,
-                            spec: $F_NAME: $F_TY = $F_DEFAULT
+                            default: $FIELD_DEFAULT,
+                            spec: $F_NAME: $F_TY
                         },
                     )*
                 }
@@ -365,7 +381,8 @@ macro_rules! impl_builder {
                     @setter
                     variant: consuming,
                     req: $FIELD_REQ,
-                    spec: $F_NAME: $F_TY = $F_DEFAULT
+                    default: $FIELD_DEFAULT,
+                    spec: $F_NAME: $F_TY
                 );
             )*
         }

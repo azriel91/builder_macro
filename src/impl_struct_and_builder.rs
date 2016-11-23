@@ -23,7 +23,8 @@ macro_rules! impl_struct_and_builder {
                     req: $FIELD_REQ:ident,
                     vis: [ $( $FIELD_VIS:ident )* ],
                     meta: [ $( #[$FIELD_META:meta] )* ],
-                    spec: $F_NAME:ident: $F_TY:ty = $F_DEFAULT:expr
+                    default: $FIELD_DEFAULT:expr,
+                    spec: $F_NAME:ident: $F_TY:ty
                 },
             )*
         }
@@ -38,10 +39,9 @@ macro_rules! impl_struct_and_builder {
             fields: {
                 $(
                     {
-                        req: $FIELD_REQ,
                         vis: [ $( $FIELD_VIS )* ],
                         meta: [ $( #[$FIELD_META] )* ],
-                        spec: $F_NAME: $F_TY = $F_DEFAULT
+                        spec: $F_NAME: $F_TY
                     },
                 )*
             }
@@ -55,7 +55,8 @@ macro_rules! impl_struct_and_builder {
                 $(
                     {
                         req: $FIELD_REQ,
-                        spec: $F_NAME: $F_TY = $F_DEFAULT
+                        default: $FIELD_DEFAULT,
+                        spec: $F_NAME: $F_TY
                     },
                 )*
             }
@@ -75,7 +76,8 @@ macro_rules! impl_struct_and_builder {
                     req: $FIELD_REQ:ident,
                     vis: [ $( $FIELD_VIS:ident )* ],
                     meta: [ $( #[$FIELD_META:meta] )* ],
-                    spec: $F_NAME:ident: $F_TY:ty = $F_DEFAULT:expr
+                    default: $FIELD_DEFAULT:expr,
+                    spec: $F_NAME:ident: $F_TY:ty
                 },
             )*
         }
@@ -90,10 +92,9 @@ macro_rules! impl_struct_and_builder {
             fields: {
                 $(
                     {
-                        req: $FIELD_REQ,
                         vis: [ $( $FIELD_VIS )* ],
                         meta: [ $( #[$FIELD_META] )* ],
-                        spec: $F_NAME: $F_TY = $F_DEFAULT
+                        spec: $F_NAME: $F_TY
                     },
                 )*
             }
@@ -107,7 +108,8 @@ macro_rules! impl_struct_and_builder {
                 $(
                     {
                         req: $FIELD_REQ,
-                        spec: $F_NAME: $F_TY = $F_DEFAULT
+                        default: $FIELD_DEFAULT,
+                        spec: $F_NAME: $F_TY
                     },
                 )*
             }
