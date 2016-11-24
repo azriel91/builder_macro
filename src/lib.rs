@@ -487,9 +487,9 @@ mod test {
             assert_eq!(my_struct.field_c, 456);
             assert_eq!(my_struct.field_d, "def");
 
-            assert_eq!(
-                "MyStruct { field_a: 123, field_b: \"abc\", field_c: 456, field_d: \"def\" }",
-                format!("{:?}", my_struct));
+            assert_eq!("MyStruct { field_a: 123, field_b: \"abc\", field_c: 456, field_d: \
+                        \"def\" }",
+                       format!("{:?}", my_struct));
         }
 
         #[test]
@@ -608,7 +608,8 @@ mod test {
                 Ok(_) => panic!("Expected Err() caused by assertion failure"),
                 Err(msg) => {
                     assert_eq!(msg,
-                               "assertion failed: 'assert_eq!(field_trait . abracadabra (  ) , 99)'")
+                               "assertion failed: 'assert_eq!(field_trait . abracadabra (  ) , \
+                                99)'")
                 }
             }
         }
@@ -670,8 +671,7 @@ mod test {
                 field_str: &'static str,
             });
 
-            let my_struct = MyStructBuilder::new(456, "str")
-                .build();
+            let my_struct = MyStructBuilder::new(456, "str").build();
             assert_eq!(my_struct.field_i32, 456);
             assert_eq!(my_struct.field_str, "str");
         }
