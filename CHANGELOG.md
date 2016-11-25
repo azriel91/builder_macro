@@ -1,3 +1,5 @@
+## 0.6.0 (unreleased)
+
 ## 0.5.0 (2016-11-26)
 
 * Updated generated builder to take in required parameters in the constructor
