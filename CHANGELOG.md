@@ -1,3 +1,10 @@
+## 0.5.0 (unreleased)
+
+* Updated generated builder to take in required parameters in the constructor
+* Parameters without a default no longer use ` = None` when they are specified
+* Default values are now specified using `default_value` instead of `Some(default_value)`
+* Replace the `try!` macro with the `?` operator
+
 ## 0.4.0 (2016-10-23)
 
 * Updated source code to adhere to Rustfmt defaults.
