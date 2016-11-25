@@ -44,67 +44,72 @@
 //!
 //! # Examples
 //!
-//! _**Disclaimer:** The examples use the `data_struct!` macro, but they are equally valid for the
-//! `object_struct!` macro, except that the return type is the struct itself and not a `Result`._
+//! _**Disclaimer:** The examples use the `data_struct!` macro. They are equally valid for the
+//! `object_struct!` macro, the difference being the return type is the struct itself and not a
+//! `Result`._
 //!
 //! ## Non-consuming Builder
 //!
 //! The simplest usage of the builder macro to generate a [non-consuming builder][2] is:
 //!
-//! ```rust,ignore
-//! data_struct!(BuilderName -> StructName {
-//!     fieldname: Type = default_value, // or
-//!     fieldname: Type, // for no default value
-//! });
-//! ```
-//!
-//! The above will generate a module private struct and a non-consuming builder with a single
-//! private field.
-//!
-//! For example, given the following declaration:
-//!
 //! ```rust
 //! # #[macro_use]
 //! # extern crate builder_macro;
 //! #
 //! # fn main() {
-//! data_struct!(BuilderName -> StructName {
-//!     value: i32 = 1,
+//! data_struct!(ItemBuilder -> Item {
+//!     required_field: i32,
+//!     defaulted_field: &'static str = "abc",
 //! });
+//!
+//! let item = ItemBuilder::new(123).build().unwrap();
+//! let another = ItemBuilder::new(456).defaulted_field("def").build().unwrap();
+//!
+//! assert_eq!(123, item.required_field);
+//! assert_eq!("abc", item.defaulted_field);
+//! assert_eq!(456, another.required_field);
+//! assert_eq!("def", another.defaulted_field);
 //! # }
 //! ```
 //!
-//! The generated code will function as follows:
+//! The generated code functions as follows:
 //!
 //! ```rust
 //! # #[macro_use]
 //! # extern crate builder_macro;
 //! #
 //! # fn main() {
-//! struct StructName {
-//!     value: i32,
+//! struct Item {
+//!     required_field: i32,
+//!     defaulted_field: &'static str,
 //! }
 //!
 //! /// Auto-generated builder
-//! struct BuilderName {
-//!     value: Option<i32>,
+//! struct ItemBuilder {
+//!     required_field: Option<i32>,
+//!     defaulted_field: Option<&'static str>,
 //! }
 //!
-//! impl BuilderName {
+//! impl ItemBuilder {
 //!     /// Construct the builder
-//!     pub fn new() -> BuilderName { BuilderName { value: Some(1), } }
+//!     pub fn new(required_field: i32) -> ItemBuilder {
+//!         ItemBuilder { required_field: Some(required_field), defaulted_field: Some("abc"), }
+//!     }
 //!
 //!     /// Build the struct
-//!     pub fn build(&self) -> Result<StructName, &'static str> {
-//!         let value = try!(self.value.clone()
-//!             .ok_or(concat!("Must pass argument for field: '", stringify!(value), "'")));
-//!         Ok(StructName { value: value, })
+//!     pub fn build(&self) -> Result<Item, &'static str> {
+//!         let required_field = try!(self.required_field.clone().ok_or(
+//!             concat!("Must pass argument for field: '", stringify!(required_field), "'")));
+//!         let defaulted_field = try!(self.defaulted_field.clone().ok_or(
+//!             concat!("Must pass argument for field: '", stringify!(defaulted_field), "'")));
+//!
+//!         Ok(Item { required_field: required_field, defaulted_field: defaulted_field })
 //!     }
 //!
 //!     #[allow(dead_code)]
 //!     /// Auto-generated setter
-//!     pub fn value(&mut self, value: i32) -> &mut Self {
-//!         self.value = Some(value);
+//!     pub fn defaulted_field(&mut self, defaulted_field: &'static str) -> &mut Self {
+//!         self.defaulted_field = Some(defaulted_field);
 //!         self
 //!     }
 //! }
@@ -114,6 +119,9 @@
 //! To generate public structs and builders, see [visbility](#visibility).
 //!
 //! ## Consuming Builder
+//!
+//! When the generated struct should own trait objects, they cannot be cloned, and so the builder
+//! must transfer ownership to the constructed instance.
 //!
 //! To generate a [consuming builder][3], instead of using `->`, use `=>` between the builder name
 //! and the target struct name.
@@ -245,7 +253,6 @@
 //!         /// StructName is an example struct.
 //!         /// These docs are copied over to the generated struct.
 //!         pub BuilderName -> StructName {
-//!             // None means no default value, a value must be specified when building
 //!             // meta attributes are copied over to the struct's fields
 //!             #[allow(dead_code)]
 //!             a_private_field: &'static str,
@@ -261,91 +268,7 @@
 //!     }
 //! }
 //!
-//! let my_struct = inner::BuilderName::new("I must set this to a non-empty string")
-//!     .build()
-//!     .unwrap();
-//!
-//! assert_eq!(50, my_struct.a_field);
-//! # }
-//! ```
-//!
-//! The above will be similar to writing the following:
-//!
-//! ```rust
-//! # #[macro_use]
-//! # extern crate builder_macro;
-//! #
-//! # fn main() {
-//! mod inner {
-//!     /// StructName is an example struct.
-//!     /// These docs are copied over to the generated struct.
-//!     pub struct StructName {
-//!         /// a_field is an i32 which must be between 0 and 100 inclusive
-//!         pub a_field: i32,
-//!         #[allow(dead_code)]
-//!         a_private_field: &'static str,
-//!     }
-//!
-//!     /// Auto-generated builder
-//!     pub struct BuilderName {
-//!         /// a_field is an i32 which must be between 0 and 100 inclusive
-//!         a_field: Option<i32>,
-//!         #[allow(dead_code)]
-//!         a_private_field: Option<&'static str>,
-//!     }
-//!
-//!     impl BuilderName {
-//!         /// Construct the builder
-//!         pub fn new() -> BuilderName {
-//!             BuilderName{a_field: Some(50), a_private_field: None,}
-//!         }
-//!
-//!         /// Build the struct
-//!         pub fn build(&self) -> Result<StructName, &'static str> {
-//!             let a_field = try!(self.a_field.clone().ok_or(
-//!                 concat!("Must pass argument for field: '", stringify!(a_field), "'") ));
-//!             let a_private_field = try!(self.a_private_field.clone().ok_or(
-//!                 concat!("Must pass argument for field: '", stringify!(a_private_field), "'") ));
-//!
-//!             use std::panic;
-//!             try!(panic::catch_unwind(|| { assert!(a_field >= 0); }).or(
-//!                 Err(concat!("assertion failed: '",
-//!                             stringify!( assert!(a_field >= 0) ),
-//!                             "'")) ) );
-//!             try!(panic::catch_unwind(|| { assert!(a_field <= 100); }).or(
-//!                 Err(concat!("assertion failed: '",
-//!                             stringify!( assert!(a_field <= 100) ),
-//!                             "'")) ) );
-//!             try!(panic::catch_unwind(|| { assert!(!a_private_field.is_empty()); }).or(
-//!                     Err(concat!("assertion failed: '",
-//!                                 stringify!( assert!(!a_private_field.is_empty()) ),
-//!                                 "'")) ) );
-//!
-//!             Ok(StructName {
-//!                 a_field: a_field,
-//!                 a_private_field: a_private_field,
-//!             })
-//!         }
-//!
-//!         #[allow(dead_code)]
-//!         /// Auto-generated setter
-//!         pub fn a_field(&mut self, value: i32) -> &mut Self {
-//!             self.a_field = Some(value);
-//!             self
-//!         }
-//!
-//!         #[allow(dead_code)]
-//!         /// Auto-generated setter
-//!         pub fn a_private_field(&mut self, value: &'static str)
-//!          -> &mut Self {
-//!             self.a_private_field = Some(value);
-//!             self
-//!         }
-//!     }
-//! }
-//!
-//! let my_struct = inner::BuilderName::new()
-//!     .a_private_field("I must set this to a non-empty string")
+//! let my_struct = inner::BuilderName::new("a_private_field must be non-empty")
 //!     .build()
 //!     .unwrap();
 //!
