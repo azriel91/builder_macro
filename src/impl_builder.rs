@@ -184,8 +184,8 @@ macro_rules! impl_builder {
                 $(
                     use std::panic;
                     $(
-                        try!(panic::catch_unwind(|| { $ASSERTION; }).or(
-                            Err(concat!("assertion failed: '", stringify!($ASSERTION), "'")) ) );
+                        panic::catch_unwind(|| { $ASSERTION; }).or(
+                            Err(concat!("assertion failed: '", stringify!($ASSERTION), "'")) )?;
                     )*
                 )*
 
@@ -307,8 +307,8 @@ macro_rules! impl_builder {
                 $(
                     use std::panic::{self, AssertUnwindSafe};
                     $(
-                        try!(panic::catch_unwind(AssertUnwindSafe(|| { $ASSERTION; })).or(
-                            Err(concat!("assertion failed: '", stringify!($ASSERTION), "'")) ) );
+                        panic::catch_unwind(AssertUnwindSafe(|| { $ASSERTION; })).or(
+                            Err(concat!("assertion failed: '", stringify!($ASSERTION), "'")) )?;
                     )*
                 )*
 

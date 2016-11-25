@@ -98,10 +98,10 @@
 //!
 //!     /// Build the struct
 //!     pub fn build(&self) -> Result<Item, &'static str> {
-//!         let required_field = try!(self.required_field.clone().ok_or(
-//!             concat!("Must pass argument for field: '", stringify!(required_field), "'")));
-//!         let defaulted_field = try!(self.defaulted_field.clone().ok_or(
-//!             concat!("Must pass argument for field: '", stringify!(defaulted_field), "'")));
+//!         let required_field = self.required_field.clone().ok_or(
+//!             concat!("Must pass argument for field: '", stringify!(required_field), "'"))?;
+//!         let defaulted_field = self.defaulted_field.clone().ok_or(
+//!             concat!("Must pass argument for field: '", stringify!(defaulted_field), "'"))?;
 //!
 //!         Ok(Item { required_field: required_field, defaulted_field: defaulted_field })
 //!     }
