@@ -479,6 +479,34 @@ mod test {
         }
 
         #[test]
+        fn generates_struct_and_builder_with_traits_and_mixed_defaults_and_parameters() {
+            data_struct!(MyStructBuilder => MyStruct {
+                field_trait: Box<Magic>,
+                field_vec: Vec<Box<Magic>> = vec![Box::new(Dust { value: 2 })],
+            });
+
+            let mut my_struct = MyStructBuilder::new(Box::new(Dust { value: 1 })).build().unwrap();
+            assert_eq!(my_struct.field_trait.abracadabra(), 1);
+            assert_eq!(my_struct.field_vec[0].abracadabra(), 2);
+        }
+
+        #[test]
+        fn generates_struct_and_builder_with_traits_and_mixed_defaults_and_specified_parameters
+            () {
+            data_struct!(MyStructBuilder => MyStruct {
+                field_trait: Box<Magic>,
+                field_vec: Vec<Box<Magic>> = vec![Box::new(Dust { value: 2 })],
+            });
+
+            let mut my_struct = MyStructBuilder::new(Box::new(Dust { value: 1 }))
+                .field_vec(vec![Box::new(Dust { value: 3 })])
+                .build()
+                .unwrap();
+            assert_eq!(my_struct.field_trait.abracadabra(), 1);
+            assert_eq!(my_struct.field_vec[0].abracadabra(), 3);
+        }
+
+        #[test]
         fn generated_build_method_uses_assertions() {
             data_struct!(MyStructBuilder -> MyStruct {
                 #[allow(dead_code)]
@@ -703,6 +731,33 @@ mod test {
 
             assert_eq!(my_struct.field_trait.abracadabra(), 1);
             assert_eq!(my_struct.field_vec[0].abracadabra(), 2);
+        }
+
+        #[test]
+        fn generates_struct_and_builder_with_traits_and_mixed_defaults_and_parameters() {
+            object_struct!(MyStructBuilder => MyStruct {
+                field_trait: Box<Magic>,
+                field_vec: Vec<Box<Magic>> = vec![Box::new(Dust { value: 2 })],
+            });
+
+            let mut my_struct = MyStructBuilder::new(Box::new(Dust { value: 1 })).build();
+            assert_eq!(my_struct.field_trait.abracadabra(), 1);
+            assert_eq!(my_struct.field_vec[0].abracadabra(), 2);
+        }
+
+        #[test]
+        fn generates_struct_and_builder_with_traits_and_mixed_defaults_and_specified_parameters
+            () {
+            object_struct!(MyStructBuilder => MyStruct {
+                field_trait: Box<Magic>,
+                field_vec: Vec<Box<Magic>> = vec![Box::new(Dust { value: 2 })],
+            });
+
+            let mut my_struct = MyStructBuilder::new(Box::new(Dust { value: 1 }))
+                .field_vec(vec![Box::new(Dust { value: 3 })])
+                .build();
+            assert_eq!(my_struct.field_trait.abracadabra(), 1);
+            assert_eq!(my_struct.field_vec[0].abracadabra(), 3);
         }
 
         #[test]
