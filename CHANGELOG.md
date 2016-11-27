@@ -1,5 +1,7 @@
 ## 0.5.1 (unreleased)
 
+* Fixed a missing comma in parse struct
+
 ## 0.5.0 (2016-11-26)
 
 * Updated generated builder to take in required parameters in the constructor
