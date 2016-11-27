@@ -307,7 +307,7 @@ macro_rules! parse_struct {
                     default: None,
                     spec: $F_NAME: $F_TY
                 },
-            }
+            },
             field_wip: { meta: [] },
             parser_wip: {
                 $( $SPEC_TAIL )*

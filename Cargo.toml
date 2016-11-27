@@ -1,6 +1,6 @@
 [package]
 name = "builder_macro"
-version = "0.6.0"
+version = "0.5.1"
 authors = ["Azriel Hoh <azriel91@gmail.com>"]
 description = "A macro to generate structs and a corresponding builder"
 license = "MIT"
