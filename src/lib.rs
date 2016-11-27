@@ -340,500 +340,574 @@ mod test {
         }
     }
 
-    mod data_struct {
-        use test::{Dust, Magic};
+    macro_rules! macro_tests {
+        ( $SUITE:ident, [ $( $PUB:ident )* ] ) => {
+            mod $SUITE {
+                mod data {
+                    use test::{Dust, Magic};
 
-        #[test]
-        fn generates_struct_and_builder_with_defaults() {
-            data_struct!(MyStructBuilder -> MyStruct {
-                field_i32: i32 = 123,
-                field_str: &'static str = "abc",
-            });
+                    #[test]
+                    fn generates_struct_with_defaults() {
+                        data_struct!($($PUB)* MyStructBuilder -> MyStruct {
+                            $($PUB)* field_i32: i32 = 123,
+                            $($PUB)* field_str: &'static str = "abc",
+                        });
 
-            let my_struct = MyStructBuilder::new().build().unwrap();
-            assert_eq!(my_struct.field_i32, 123);
-            assert_eq!(my_struct.field_str, "abc");
-        }
+                        let my_struct = MyStructBuilder::new().build().unwrap();
 
-        #[test]
-        fn generates_struct_and_builder_with_no_defaults_and_parameters() {
-            data_struct!(MyStructBuilder -> MyStruct {
-                field_i32: i32,
-                field_str: &'static str,
-            });
+                        assert_eq!(my_struct.field_i32, 123);
+                        assert_eq!(my_struct.field_str, "abc");
+                    }
 
-            let my_struct = MyStructBuilder::new(456, "str")
-                .build()
-                .unwrap();
-            assert_eq!(my_struct.field_i32, 456);
-            assert_eq!(my_struct.field_str, "str");
-        }
+                    #[test]
+                    fn generates_struct_with_no_defaults_and_parameters() {
+                        data_struct!($($PUB)* MyStructBuilder -> MyStruct {
+                            $($PUB)* field_i32: i32,
+                            $($PUB)* field_str: &'static str,
+                        });
 
-        #[test]
-        fn generates_struct_and_builder_with_mixed_defaults_and_parameters() {
-            data_struct!(MyStructBuilder -> MyStruct {
-                field_i32: i32,
-                field_str: &'static str = "abc",
-            });
+                        let my_struct = MyStructBuilder::new(456, "str").build().unwrap();
 
-            let my_struct = MyStructBuilder::new(456).build().unwrap();
-            assert_eq!(my_struct.field_i32, 456);
-            assert_eq!(my_struct.field_str, "abc");
-        }
+                        assert_eq!(my_struct.field_i32, 456);
+                        assert_eq!(my_struct.field_str, "str");
+                    }
 
-        #[test]
-        fn generates_struct_and_builder_with_mixed_defaults_and_specified_parameters() {
-            data_struct!(MyStructBuilder -> MyStruct {
-                field_i32: i32,
-                field_str: &'static str = "abc",
-            });
+                    #[test]
+                    fn generates_struct_with_mixed_defaults_and_parameters() {
+                        data_struct!($($PUB)* MyStructBuilder -> MyStruct {
+                            /// docs
+                            $($PUB)* field_i32: i32,
+                            /// docs
+                            $($PUB)* field_str: &'static str = "abc",
+                        });
 
-            let my_struct = MyStructBuilder::new(456).field_str("str").build().unwrap();
-            assert_eq!(my_struct.field_i32, 456);
-            assert_eq!(my_struct.field_str, "str");
-        }
+                        let my_struct = MyStructBuilder::new(456).build().unwrap();
 
-        #[test]
-        fn generates_struct_and_builder_with_mixed_defaults_maintains_order() {
-            data_struct!(
-                #[derive(Debug)]
-                MyStructBuilder -> MyStruct {
-                field_a: i32,
-                field_b: &'static str = "abc",
-                field_c: i32 = 456,
-                field_d: &'static str,
-            });
+                        assert_eq!(my_struct.field_i32, 456);
+                        assert_eq!(my_struct.field_str, "abc");
+                    }
 
-            let my_struct = MyStructBuilder::new(123, "def").build().unwrap();
-            assert_eq!(my_struct.field_a, 123);
-            assert_eq!(my_struct.field_b, "abc");
-            assert_eq!(my_struct.field_c, 456);
-            assert_eq!(my_struct.field_d, "def");
+                    #[test]
+                    fn generates_struct_with_mixed_defaults_and_specified_parameters() {
+                        data_struct!($($PUB)* MyStructBuilder -> MyStruct {
+                            /// docs
+                            $($PUB)* field_i32: i32,
+                            /// docs
+                            $($PUB)* field_str: &'static str = "abc",
+                        });
 
-            assert_eq!("MyStruct { field_a: 123, field_b: \"abc\", field_c: 456, field_d: \
-                        \"def\" }",
-                       format!("{:?}", my_struct));
-        }
+                        let my_struct = MyStructBuilder::new(456).field_str("str").build().unwrap();
 
-        #[test]
-        fn generates_struct_and_builder_with_defaults_and_parameters() {
-            data_struct!(MyStructBuilder -> MyStruct {
-                field_i32: i32 = 123,
-                field_str: &'static str = "abc",
-            });
+                        assert_eq!(my_struct.field_i32, 456);
+                        assert_eq!(my_struct.field_str, "str");
+                    }
 
-            let my_struct = MyStructBuilder::new()
-                .field_i32(456)
-                .field_str("str")
-                .build()
-                .unwrap();
-            assert_eq!(my_struct.field_i32, 456);
-            assert_eq!(my_struct.field_str, "str");
-        }
+                    #[test]
+                    fn generates_struct_with_mixed_defaults_maintains_order() {
+                        data_struct!(
+                            #[derive(Debug)]
+                            MyStructBuilder -> MyStruct {
+                            /// docs
+                            $($PUB)* field_a: i32,
+                            /// docs
+                            $($PUB)* field_b: &'static str = "abc",
+                            /// docs
+                            $($PUB)* field_c: i32 = 456,
+                            /// docs
+                            $($PUB)* field_d: &'static str,
+                        });
 
-        #[test]
-        fn generates_struct_and_builder_with_generic_types() {
-            data_struct!(MyStructBuilder -> MyStruct {
-                field_vec: Vec<i32> = vec![123],
-            });
+                        let my_struct = MyStructBuilder::new(123, "def").build().unwrap();
 
-            let my_struct = MyStructBuilder::new().build().unwrap();
-            let my_struct_2 = MyStructBuilder::new()
-                .field_vec(vec![234, 456])
-                .build()
-                .unwrap();
+                        assert_eq!(my_struct.field_a, 123);
+                        assert_eq!(my_struct.field_b, "abc");
+                        assert_eq!(my_struct.field_c, 456);
+                        assert_eq!(my_struct.field_d, "def");
 
-            assert_eq!(my_struct.field_vec, vec![123]);
-            assert_eq!(my_struct_2.field_vec, vec![234, 456]);
-        }
+                        assert_eq!("MyStruct { field_a: 123, field_b: \"abc\", field_c: 456, \
+                                    field_d: \"def\" }",
+                                   format!("{:?}", my_struct));
+                    }
 
-        #[test]
-        fn generates_struct_and_builder_with_traits_using_default_values() {
-            // Note: we use => instead of -> for the consuming variant of the builder
-            data_struct!(MyStructBuilder => MyStruct {
-                field_trait: Box<Magic> = Box::new(Dust { value: 1 }),
-                field_vec: Vec<Box<Magic>> = vec![Box::new(Dust { value: 2 })],
-            });
+                    #[test]
+                    fn generates_struct_with_defaults_and_parameters() {
+                        data_struct!($($PUB)* MyStructBuilder -> MyStruct {
+                            $($PUB)* field_i32: i32 = 123,
+                            $($PUB)* field_str: &'static str = "abc",
+                        });
 
-            let mut my_struct = MyStructBuilder::new().build().unwrap();
+                        let my_struct = MyStructBuilder::new()
+                            .field_i32(456)
+                            .field_str("str")
+                            .build()
+                            .unwrap();
 
-            assert_eq!(my_struct.field_trait.abracadabra(), 1);
-            assert_eq!(my_struct.field_vec[0].abracadabra(), 2);
-        }
+                        assert_eq!(my_struct.field_i32, 456);
+                        assert_eq!(my_struct.field_str, "str");
+                    }
 
-        #[test]
-        fn generates_struct_and_builder_with_traits_specifying_parameters() {
-            // Note: we use => instead of -> for the consuming variant of the builder
-            data_struct!(MyStructBuilder => MyStruct {
-                field_trait: Box<Magic>,
-                field_vec: Vec<Box<Magic>>,
-            });
+                    #[test]
+                    fn generates_struct_with_generic_types() {
+                        data_struct!($($PUB)* MyStructBuilder -> MyStruct {
+                            $($PUB)* field_vec: Vec<i32> = vec![123],
+                        });
 
-            let mut my_struct = MyStructBuilder::new(Box::new(Dust { value: 1 }),
-                                                     vec![Box::new(Dust { value: 2 })])
-                .build()
-                .unwrap();
+                        let my_struct = MyStructBuilder::new().build().unwrap();
 
-            assert_eq!(my_struct.field_trait.abracadabra(), 1);
-            assert_eq!(my_struct.field_vec[0].abracadabra(), 2);
-        }
+                        let my_struct_2 = MyStructBuilder::new()
+                            .field_vec(vec![234, 456])
+                            .build()
+                            .unwrap();
 
-        #[test]
-        fn generates_struct_and_builder_with_traits_and_mixed_defaults_and_parameters() {
-            data_struct!(MyStructBuilder => MyStruct {
-                field_trait: Box<Magic>,
-                field_vec: Vec<Box<Magic>> = vec![Box::new(Dust { value: 2 })],
-            });
 
-            let mut my_struct = MyStructBuilder::new(Box::new(Dust { value: 1 })).build().unwrap();
-            assert_eq!(my_struct.field_trait.abracadabra(), 1);
-            assert_eq!(my_struct.field_vec[0].abracadabra(), 2);
-        }
+                        assert_eq!(my_struct.field_vec, vec![123]);
+                        assert_eq!(my_struct_2.field_vec, vec![234, 456]);
+                    }
 
-        #[test]
-        fn generates_struct_and_builder_with_traits_and_mixed_defaults_and_specified_parameters
-            () {
-            data_struct!(MyStructBuilder => MyStruct {
-                field_trait: Box<Magic>,
-                field_vec: Vec<Box<Magic>> = vec![Box::new(Dust { value: 2 })],
-            });
+                    #[test]
+                    fn generates_struct_with_traits_using_default_values() {
+                        // Note: we use => instead of -> for the consuming variant of the builder
+                        data_struct!(MyStructBuilder => MyStruct {
+                            $($PUB)* field_trait: Box<Magic> = Box::new(Dust { value: 1 }),
+                            $($PUB)* field_vec: Vec<Box<Magic>> = vec![Box::new(Dust { value: 2 })],
+                        });
 
-            let mut my_struct = MyStructBuilder::new(Box::new(Dust { value: 1 }))
-                .field_vec(vec![Box::new(Dust { value: 3 })])
-                .build()
-                .unwrap();
-            assert_eq!(my_struct.field_trait.abracadabra(), 1);
-            assert_eq!(my_struct.field_vec[0].abracadabra(), 3);
-        }
+                        let mut my_struct = MyStructBuilder::new().build().unwrap();
 
-        #[test]
-        fn generated_build_method_uses_assertions() {
-            data_struct!(MyStructBuilder -> MyStruct {
-                #[allow(dead_code)]
-                field_i32: i32 = 123,
-            },
-            assertions: {
-                assert!(field_i32 > 0);
-            });
 
-            let result = MyStructBuilder::new().field_i32(-1).build();
+                        assert_eq!(my_struct.field_trait.abracadabra(), 1);
+                        assert_eq!(my_struct.field_vec[0].abracadabra(), 2);
+                    }
 
-            match result {
-                Ok(_) => panic!("Expected Err() caused by assertion failure"),
-                Err(msg) => assert_eq!(msg, "assertion failed: 'assert!(field_i32 > 0)'"),
-            }
-        }
+                    #[test]
+                    fn generates_struct_with_traits_specifying_parameters() {
+                        // Note: we use => instead of -> for the consuming variant of the builder
+                        data_struct!(MyStructBuilder => MyStruct {
+                            $($PUB)* field_trait: Box<Magic>,
+                            $($PUB)* field_vec: Vec<Box<Magic>>,
+                        });
 
-        #[test]
-        fn generated_consuming_build_method_uses_assertions() {
-            data_struct!(MyStructBuilder => MyStruct {
-                #[allow(dead_code)]
-                field_i32: i32 = 123,
-            },
-            assertions: {
-                assert!(field_i32 == 99);
-            });
+                        let mut my_struct = MyStructBuilder::new(Box::new(Dust { value: 1 }),
+                                                                 vec![Box::new(Dust { value: 2 })])
+                            .build()
+                            .unwrap();
 
-            let result = MyStructBuilder::new().build();
 
-            let expected = "assertion failed: 'assert!(field_i32 == 99)'";
-            match result {
-                Ok(_) => panic!("Expected Err() caused by assertion failure"),
-                Err(msg) => assert_eq!(msg, expected),
-            }
-        }
+                        assert_eq!(my_struct.field_trait.abracadabra(), 1);
+                        assert_eq!(my_struct.field_vec[0].abracadabra(), 2);
+                    }
 
-        #[test]
-        fn generated_consuming_build_method_asserts_on_trait_fields() {
-            data_struct!(MyStructBuilder => MyStruct {
-                #[allow(dead_code)]
-                field_trait: Box<Magic> = Box::new(Dust { value: 1 }),
-            },
-            assertions: {
-                assert_eq!(field_trait.abracadabra(), 99);
-            });
+                    #[test]
+                    fn generates_struct_with_traits_and_mixed_defaults_and_parameters() {
+                        data_struct!(MyStructBuilder => MyStruct {
+                            /// docs
+                            $($PUB)* field_trait: Box<Magic>,
+                            /// docs
+                            $($PUB)* field_vec: Vec<Box<Magic>> = vec![Box::new(Dust { value: 2 })],
+                        });
 
-            let result = MyStructBuilder::new().build();
+                        let mut my_struct = MyStructBuilder::new(Box::new(Dust { value: 1 }))
+                            .build()
+                            .unwrap();
 
-            match result {
-                Ok(_) => panic!("Expected Err() caused by assertion failure"),
-                Err(msg) => {
-                    assert_eq!(msg,
-                               "assertion failed: 'assert_eq!(field_trait . abracadabra (  ) , \
-                                99)'")
+                        assert_eq!(my_struct.field_trait.abracadabra(), 1);
+                        assert_eq!(my_struct.field_vec[0].abracadabra(), 2);
+                    }
+
+                    #[test]
+                    fn generates_struct_with_traits_and_mixed_defaults_and_specified_parameters() {
+                        data_struct!(MyStructBuilder => MyStruct {
+                            /// docs
+                            $($PUB)* field_trait: Box<Magic>,
+                            /// docs
+                            $($PUB)* field_vec: Vec<Box<Magic>> = vec![Box::new(Dust { value: 2 })],
+                        });
+
+                        let mut my_struct = MyStructBuilder::new(Box::new(Dust { value: 1 }))
+                            .field_vec(vec![Box::new(Dust { value: 3 })])
+                            .build()
+                            .unwrap();
+
+                        assert_eq!(my_struct.field_trait.abracadabra(), 1);
+                        assert_eq!(my_struct.field_vec[0].abracadabra(), 3);
+                    }
+
+                    #[test]
+                    fn generated_build_method_uses_assertions() {
+                        data_struct!($($PUB)* MyStructBuilder -> MyStruct {
+                            #[allow(dead_code)]
+                            $($PUB)* field_i32: i32 = 123,
+                        },
+                        assertions: {
+                            assert!(field_i32 > 0);
+                        });
+
+                        let result = MyStructBuilder::new().field_i32(-1).build();
+
+                        match result {
+                            Ok(_) => panic!("Expected Err() caused by assertion failure"),
+                            Err(msg) => assert_eq!(msg,
+                                                   "assertion failed: 'assert!(field_i32 > 0)'"),
+                        }
+                    }
+
+                    #[test]
+                    fn generated_consuming_build_method_uses_assertions() {
+                        data_struct!(MyStructBuilder => MyStruct {
+                            #[allow(dead_code)]
+                            $($PUB)* field_i32: i32 = 123,
+                        },
+                        assertions: {
+                            assert!(field_i32 == 99);
+                        });
+
+                        let result = MyStructBuilder::new().build();
+
+                        let expected = "assertion failed: 'assert!(field_i32 == 99)'";
+                        match result {
+                            Ok(_) => panic!("Expected Err() caused by assertion failure"),
+                            Err(msg) => assert_eq!(msg, expected),
+                        }
+                    }
+
+                    #[test]
+                    fn generated_consuming_build_method_asserts_on_trait_fields() {
+                        data_struct!(MyStructBuilder => MyStruct {
+                            #[allow(dead_code)]
+                            $($PUB)* field_trait: Box<Magic> = Box::new(Dust { value: 1 }),
+                        },
+                        assertions: {
+                            assert_eq!(field_trait.abracadabra(), 99);
+                        });
+
+                        let result = MyStructBuilder::new().build();
+
+                        match result {
+                            Ok(_) => panic!("Expected Err() caused by assertion failure"),
+                            Err(msg) => {
+                                assert_eq!(msg,
+                                           "assertion failed: 'assert_eq!(field_trait . \
+                                            abracadabra (  ) , 99)'")
+                            }
+                        }
+                    }
+
+                    mod visibility_test {
+                        data_struct!(OuterStructBuilder -> OuterStruct { field_i32: i32 = 1, });
+
+                        mod inner {
+                            data_struct!($($PUB)* MyStructBuilder -> MyStruct {
+                                field_i32: i32 = 1,
+                            });
+                            data_struct!(pub InnerStructBuilder -> InnerStruct {
+                                pub field_i32: i32 = 1,
+                            });
+
+                            #[test]
+                            fn can_access_private_struct_from_within_module() {
+                                let my_struct = MyStructBuilder::new().build().unwrap();
+
+                                assert_eq!(my_struct.field_i32, 1);
+                            }
+
+                            #[test]
+                            fn can_access_private_outer_struct_from_inner_module() {
+                                let outer_struct = super::OuterStructBuilder::new().build()
+                                    .unwrap();
+
+                                assert_eq!(outer_struct.field_i32, 1);
+                            }
+                        }
+
+                        #[test]
+                        fn can_access_public_struct_from_outside_module() {
+                            let inner_struct = inner::InnerStructBuilder::new().build().unwrap();
+
+                            assert_eq!(inner_struct.field_i32, 1);
+                        }
+
+                        // The following causes a compilation failure if uncommented
+                        // #[test]
+                        // fn cannot_access_private_struct() {
+                        //     let my_struct = inner::MyStructBuilder::new().build().unwrap();
+                        //
+                        //     assert_eq!(my_struct.field_i32, 0);
+                        // }
+                    }
+                }
+
+                mod object {
+                    use test::{Dust, Magic};
+
+                    #[test]
+                    fn generates_struct_with_defaults() {
+                        object_struct!($($PUB)* MyStructBuilder -> MyStruct {
+                            $($PUB)* field_i32: i32 = 123,
+                            $($PUB)* field_str: &'static str = "abc",
+                        });
+
+                        let my_struct = MyStructBuilder::new().build();
+
+                        assert_eq!(my_struct.field_i32, 123);
+                        assert_eq!(my_struct.field_str, "abc");
+                    }
+
+                    #[test]
+                    fn generates_struct_with_no_defaults_and_parameters() {
+                        object_struct!($($PUB)* MyStructBuilder -> MyStruct {
+                            $($PUB)* field_i32: i32,
+                            $($PUB)* field_str: &'static str,
+                        });
+
+                        let my_struct = MyStructBuilder::new(456, "str").build();
+
+                        assert_eq!(my_struct.field_i32, 456);
+                        assert_eq!(my_struct.field_str, "str");
+                    }
+
+                    #[test]
+                    fn generates_struct_with_mixed_defaults_and_parameters() {
+                        object_struct!($($PUB)* MyStructBuilder -> MyStruct {
+                            /// docs
+                            $($PUB)* field_i32: i32,
+                            /// docs
+                            $($PUB)* field_str: &'static str = "abc",
+                        });
+
+                        let my_struct = MyStructBuilder::new(456).build();
+
+                        assert_eq!(my_struct.field_i32, 456);
+                        assert_eq!(my_struct.field_str, "abc");
+                    }
+
+                    #[test]
+                    fn generates_struct_with_mixed_defaults_and_specified_parameters() {
+                        object_struct!($($PUB)* MyStructBuilder -> MyStruct {
+                            /// docs
+                            $($PUB)* field_i32: i32,
+                            /// docs
+                            $($PUB)* field_str: &'static str = "abc",
+                        });
+
+                        let my_struct = MyStructBuilder::new(456).field_str("str").build();
+
+                        assert_eq!(my_struct.field_i32, 456);
+                        assert_eq!(my_struct.field_str, "str");
+                    }
+
+                    #[test]
+                    fn generates_struct_with_mixed_defaults_maintains_order() {
+                        object_struct!(
+                            #[derive(Debug)]
+                            MyStructBuilder -> MyStruct {
+                            /// docs
+                            $($PUB)* field_a: i32,
+                            /// docs
+                            $($PUB)* field_b: &'static str = "abc",
+                            /// docs
+                            $($PUB)* field_c: i32 = 456,
+                            /// docs
+                            $($PUB)* field_d: &'static str,
+                        });
+
+                        let my_struct = MyStructBuilder::new(123, "def").build();
+
+                        assert_eq!(my_struct.field_a, 123);
+                        assert_eq!(my_struct.field_b, "abc");
+                        assert_eq!(my_struct.field_c, 456);
+                        assert_eq!(my_struct.field_d, "def");
+
+                        assert_eq!("MyStruct { field_a: 123, field_b: \"abc\", field_c: 456, \
+                                    field_d: \"def\" }",
+                                   format!("{:?}", my_struct));
+                    }
+
+                    #[test]
+                    fn generates_struct_with_defaults_and_parameters() {
+                        object_struct!($($PUB)* MyStructBuilder -> MyStruct {
+                            $($PUB)* field_i32: i32 = 123,
+                            $($PUB)* field_str: &'static str = "abc",
+                        });
+
+                        let my_struct = MyStructBuilder::new()
+                            .field_i32(456)
+                            .field_str("str")
+                            .build();
+
+                        assert_eq!(my_struct.field_i32, 456);
+                        assert_eq!(my_struct.field_str, "str");
+                    }
+
+                    #[test]
+                    fn generates_struct_with_generic_types() {
+                        object_struct!($($PUB)* MyStructBuilder -> MyStruct {
+                            $($PUB)* field_vec: Vec<i32> = vec![123],
+                        });
+
+                        let my_struct = MyStructBuilder::new().build();
+
+                        let my_struct_2 = MyStructBuilder::new()
+                            .field_vec(vec![234, 456])
+                            .build();
+
+
+                        assert_eq!(my_struct.field_vec, vec![123]);
+                        assert_eq!(my_struct_2.field_vec, vec![234, 456]);
+                    }
+
+                    #[test]
+                    fn generates_struct_with_traits_using_default_values() {
+                        // Note: we use => instead of -> for the consuming variant of the builder
+                        object_struct!(MyStructBuilder => MyStruct {
+                            $($PUB)* field_trait: Box<Magic> = Box::new(Dust { value: 1 }),
+                            $($PUB)* field_vec: Vec<Box<Magic>> = vec![Box::new(Dust { value: 2 })],
+                        });
+
+                        let mut my_struct = MyStructBuilder::new().build();
+
+
+                        assert_eq!(my_struct.field_trait.abracadabra(), 1);
+                        assert_eq!(my_struct.field_vec[0].abracadabra(), 2);
+                    }
+
+                    #[test]
+                    fn generates_struct_with_traits_specifying_parameters() {
+                        // Note: we use => instead of -> for the consuming variant of the builder
+                        object_struct!(MyStructBuilder => MyStruct {
+                            $($PUB)* field_trait: Box<Magic>,
+                            $($PUB)* field_vec: Vec<Box<Magic>>,
+                        });
+
+                        let mut my_struct = MyStructBuilder::new(Box::new(Dust { value: 1 }),
+                                                                 vec![Box::new(Dust { value: 2 })])
+                            .build();
+
+
+                        assert_eq!(my_struct.field_trait.abracadabra(), 1);
+                        assert_eq!(my_struct.field_vec[0].abracadabra(), 2);
+                    }
+
+                    #[test]
+                    fn generates_struct_with_traits_and_mixed_defaults_and_parameters() {
+                        object_struct!(MyStructBuilder => MyStruct {
+                            /// docs
+                            $($PUB)* field_trait: Box<Magic>,
+                            /// docs
+                            $($PUB)* field_vec: Vec<Box<Magic>> = vec![Box::new(Dust { value: 2 })],
+                        });
+
+                        let mut my_struct = MyStructBuilder::new(Box::new(Dust { value: 1 }))
+                            .build();
+
+                        assert_eq!(my_struct.field_trait.abracadabra(), 1);
+                        assert_eq!(my_struct.field_vec[0].abracadabra(), 2);
+                    }
+
+                    #[test]
+                    fn generates_struct_with_traits_and_mixed_defaults_and_specified_parameters() {
+                        object_struct!(MyStructBuilder => MyStruct {
+                            /// docs
+                            $($PUB)* field_trait: Box<Magic>,
+                            /// docs
+                            $($PUB)* field_vec: Vec<Box<Magic>> = vec![Box::new(Dust { value: 2 })],
+                        });
+
+                        let mut my_struct = MyStructBuilder::new(Box::new(Dust { value: 1 }))
+                            .field_vec(vec![Box::new(Dust { value: 3 })])
+                            .build();
+
+                        assert_eq!(my_struct.field_trait.abracadabra(), 1);
+                        assert_eq!(my_struct.field_vec[0].abracadabra(), 3);
+                    }
+
+                    #[test]
+                    #[should_panic(expected = "assertion failed")]
+                    fn generated_build_method_uses_assertions() {
+                        object_struct!($($PUB)* MyStructBuilder -> MyStruct {
+                            #[allow(dead_code)]
+                            $($PUB)* field_i32: i32 = 123,
+                        },
+                        assertions: {
+                            assert!(field_i32 > 0);
+                        });
+
+                        MyStructBuilder::new().field_i32(-1).build();
+                    }
+
+                    #[test]
+                    #[should_panic(expected = "assertion failed")]
+                    fn generated_consuming_build_method_uses_assertions() {
+                        object_struct!(MyStructBuilder => MyStruct {
+                            #[allow(dead_code)]
+                            $($PUB)* field_i32: i32 = 123,
+                        },
+                        assertions: {
+                            assert!(field_i32 == 99);
+                        });
+
+                        MyStructBuilder::new().build();
+                    }
+
+                    #[test]
+                    #[should_panic(expected = "assertion failed")]
+                    fn generated_consuming_build_method_asserts_on_trait_fields() {
+                        object_struct!(MyStructBuilder => MyStruct {
+                            #[allow(dead_code)]
+                            $($PUB)* field_trait: Box<Magic> = Box::new(Dust { value: 1 }),
+                        },
+                        assertions: {
+                            assert_eq!(field_trait.abracadabra(), 99);
+                        });
+
+                        MyStructBuilder::new().build();
+                    }
+
+                    mod visibility_test {
+                        object_struct!(OuterStructBuilder -> OuterStruct { field_i32: i32 = 1, });
+
+                        mod inner {
+                            object_struct!($($PUB)* MyStructBuilder -> MyStruct {
+                                field_i32: i32 = 1,
+                            });
+                            object_struct!(pub InnerStructBuilder -> InnerStruct {
+                                pub field_i32: i32 = 1,
+                            });
+
+                            #[test]
+                            fn can_access_private_struct_from_within_module() {
+                                let my_struct = MyStructBuilder::new().build();
+
+                                assert_eq!(my_struct.field_i32, 1);
+                            }
+
+                            #[test]
+                            fn can_access_private_outer_struct_from_inner_module() {
+                                let outer_struct = super::OuterStructBuilder::new().build();
+
+                                assert_eq!(outer_struct.field_i32, 1);
+                            }
+                        }
+
+                        #[test]
+                        fn can_access_public_struct_from_outside_module() {
+                            let inner_struct = inner::InnerStructBuilder::new().build();
+
+                            assert_eq!(inner_struct.field_i32, 1);
+                        }
+
+                        // The following causes a compilation failure if uncommented
+                        // #[test]
+                        // fn cannot_access_private_struct() {
+                        //     let my_struct = inner::MyStructBuilder::new().build();
+                        //
+                        //     assert_eq!(my_struct.field_i32, 0);
+                        // }
+                    }
                 }
             }
-        }
-
-        mod visibility_test {
-            data_struct!(OuterStructBuilder -> OuterStruct { field_i32: i32 = 1, });
-
-            mod inner {
-                data_struct!(MyStructBuilder -> MyStruct { field_i32: i32 = 1, });
-                data_struct!(pub InnerStructBuilder -> InnerStruct { pub field_i32: i32 = 1, });
-
-                #[test]
-                fn can_access_private_struct_from_within_module() {
-                    let my_struct = MyStructBuilder::new().build().unwrap();
-                    assert_eq!(my_struct.field_i32, 1);
-                }
-
-                #[test]
-                fn can_access_private_outer_struct_from_inner_module() {
-                    let outer_struct = super::OuterStructBuilder::new().build().unwrap();
-                    assert_eq!(outer_struct.field_i32, 1);
-                }
-            }
-
-            #[test]
-            fn can_access_public_struct_from_outside_module() {
-                let inner_struct = inner::InnerStructBuilder::new().build().unwrap();
-                assert_eq!(inner_struct.field_i32, 1);
-            }
-
-            // The following causes a compilation failure if uncommented
-            // #[test]
-            // fn cannot_access_private_struct() {
-            //     let my_struct = inner::MyStructBuilder::new().build().unwrap();
-            //     assert_eq!(my_struct.field_i32, 0);
-            // }
-        }
+        };
     }
 
-    mod object_struct {
-        use test::{Dust, Magic};
-
-        #[test]
-        fn generates_struct_and_builder_with_defaults() {
-            object_struct!(MyStructBuilder -> MyStruct {
-                field_i32: i32 = 123,
-                field_str: &'static str = "abc",
-            });
-
-            let my_struct = MyStructBuilder::new().build();
-            assert_eq!(my_struct.field_i32, 123);
-            assert_eq!(my_struct.field_str, "abc");
-        }
-
-        #[test]
-        fn generates_struct_and_builder_with_no_defaults_and_parameters() {
-            object_struct!(MyStructBuilder -> MyStruct {
-                field_i32: i32,
-                field_str: &'static str,
-            });
-
-            let my_struct = MyStructBuilder::new(456, "str").build();
-            assert_eq!(my_struct.field_i32, 456);
-            assert_eq!(my_struct.field_str, "str");
-        }
-
-        #[test]
-        fn generates_struct_and_builder_with_mixed_defaults_and_parameters() {
-            object_struct!(MyStructBuilder -> MyStruct {
-                field_i32: i32,
-                field_str: &'static str = "abc",
-            });
-
-            let my_struct = MyStructBuilder::new(456).build();
-            assert_eq!(my_struct.field_i32, 456);
-            assert_eq!(my_struct.field_str, "abc");
-        }
-
-        #[test]
-        fn generates_struct_and_builder_with_mixed_defaults_and_specified_parameters() {
-            object_struct!(MyStructBuilder -> MyStruct {
-                field_i32: i32,
-                field_str: &'static str = "abc",
-            });
-
-            let my_struct = MyStructBuilder::new(456).field_str("str").build();
-            assert_eq!(my_struct.field_i32, 456);
-            assert_eq!(my_struct.field_str, "str");
-        }
-
-        #[test]
-        fn generates_struct_and_builder_with_mixed_defaults_maintains_order() {
-            object_struct!(
-                #[derive(Debug)]
-                MyStructBuilder -> MyStruct {
-                field_a: i32,
-                field_b: &'static str = "abc",
-                field_c: i32 = 456,
-                field_d: &'static str,
-            });
-
-            let my_struct = MyStructBuilder::new(123, "def").build();
-            assert_eq!(my_struct.field_a, 123);
-            assert_eq!(my_struct.field_b, "abc");
-            assert_eq!(my_struct.field_c, 456);
-            assert_eq!(my_struct.field_d, "def");
-
-            assert_eq!(
-                "MyStruct { field_a: 123, field_b: \"abc\", field_c: 456, field_d: \"def\" }",
-                format!("{:?}", my_struct));
-        }
-
-        #[test]
-        fn generates_struct_and_builder_with_defaults_and_parameters() {
-            object_struct!(MyStructBuilder -> MyStruct {
-                field_i32: i32 = 123,
-                field_str: &'static str = "abc",
-            });
-
-            let my_struct = MyStructBuilder::new()
-                .field_i32(456)
-                .field_str("str")
-                .build();
-            assert_eq!(my_struct.field_i32, 456);
-            assert_eq!(my_struct.field_str, "str");
-        }
-
-        #[test]
-        fn generates_struct_and_builder_with_generic_types() {
-            object_struct!(MyStructBuilder -> MyStruct {
-                field_vec: Vec<i32> = vec![123],
-            });
-
-            let my_struct = MyStructBuilder::new().build();
-            let my_struct_2 = MyStructBuilder::new()
-                .field_vec(vec![234, 456])
-                .build();
-
-            assert_eq!(my_struct.field_vec, vec![123]);
-            assert_eq!(my_struct_2.field_vec, vec![234, 456]);
-        }
-
-        #[test]
-        fn generates_struct_and_builder_with_traits_using_default_values() {
-            // Note: we use => instead of -> for the consuming variant of the builder
-            object_struct!(MyStructBuilder => MyStruct {
-                field_trait: Box<Magic> = Box::new(Dust { value: 1 }),
-                field_vec: Vec<Box<Magic>> = vec![Box::new(Dust { value: 2 })],
-            });
-
-            let mut my_struct = MyStructBuilder::new().build();
-
-            assert_eq!(my_struct.field_trait.abracadabra(), 1);
-            assert_eq!(my_struct.field_vec[0].abracadabra(), 2);
-        }
-
-        #[test]
-        fn generates_struct_and_builder_with_traits_specifying_parameters() {
-            // Note: we use => instead of -> for the consuming variant of the builder
-            object_struct!(MyStructBuilder => MyStruct {
-                field_trait: Box<Magic>,
-                field_vec: Vec<Box<Magic>>,
-            });
-
-            let field_trait: Box<Magic> = Box::new(Dust { value: 1 });
-            let field_vec: Vec<Box<Magic>> = vec![Box::new(Dust { value: 2 })];
-            let mut my_struct = MyStructBuilder::new(field_trait, field_vec).build();
-
-            assert_eq!(my_struct.field_trait.abracadabra(), 1);
-            assert_eq!(my_struct.field_vec[0].abracadabra(), 2);
-        }
-
-        #[test]
-        fn generates_struct_and_builder_with_traits_and_mixed_defaults_and_parameters() {
-            object_struct!(MyStructBuilder => MyStruct {
-                field_trait: Box<Magic>,
-                field_vec: Vec<Box<Magic>> = vec![Box::new(Dust { value: 2 })],
-            });
-
-            let mut my_struct = MyStructBuilder::new(Box::new(Dust { value: 1 })).build();
-            assert_eq!(my_struct.field_trait.abracadabra(), 1);
-            assert_eq!(my_struct.field_vec[0].abracadabra(), 2);
-        }
-
-        #[test]
-        fn generates_struct_and_builder_with_traits_and_mixed_defaults_and_specified_parameters
-            () {
-            object_struct!(MyStructBuilder => MyStruct {
-                field_trait: Box<Magic>,
-                field_vec: Vec<Box<Magic>> = vec![Box::new(Dust { value: 2 })],
-            });
-
-            let mut my_struct = MyStructBuilder::new(Box::new(Dust { value: 1 }))
-                .field_vec(vec![Box::new(Dust { value: 3 })])
-                .build();
-            assert_eq!(my_struct.field_trait.abracadabra(), 1);
-            assert_eq!(my_struct.field_vec[0].abracadabra(), 3);
-        }
-
-        #[test]
-        #[should_panic(expected = "assertion failed")]
-        fn generated_build_method_uses_assertions() {
-            object_struct!(MyStructBuilder -> MyStruct {
-                #[allow(dead_code)]
-                field_i32: i32 = 123,
-            },
-            assertions: {
-                assert!(field_i32 > 0);
-            });
-
-            MyStructBuilder::new().field_i32(-1).build();
-        }
-
-        #[test]
-        #[should_panic(expected = "assertion failed")]
-        fn generated_consuming_build_method_uses_assertions() {
-            object_struct!(MyStructBuilder => MyStruct {
-                #[allow(dead_code)]
-                field_i32: i32 = 123,
-            },
-            assertions: {
-                assert!(field_i32 == 99);
-            });
-
-            MyStructBuilder::new().build();
-        }
-
-        #[test]
-        #[should_panic(expected = "assertion failed")]
-        fn generated_consuming_build_method_asserts_on_trait_fields() {
-            object_struct!(MyStructBuilder => MyStruct {
-                #[allow(dead_code)]
-                field_trait: Box<Magic> = Box::new(Dust { value: 1 }),
-            },
-            assertions: {
-                assert_eq!(field_trait.abracadabra(), 99);
-            });
-
-            MyStructBuilder::new().build();
-        }
-
-        mod visibility_test {
-            object_struct!(OuterStructBuilder -> OuterStruct { field_i32: i32 = 1, });
-
-            mod inner {
-                object_struct!(MyStructBuilder -> MyStruct { field_i32: i32 = 1, });
-                object_struct!(pub InnerStructBuilder -> InnerStruct { pub field_i32: i32 = 1, });
-
-                #[test]
-                fn can_access_private_struct_from_within_module() {
-                    let my_struct = MyStructBuilder::new().build();
-                    assert_eq!(my_struct.field_i32, 1);
-                }
-
-                #[test]
-                fn can_access_private_outer_struct_from_inner_module() {
-                    let outer_struct = super::OuterStructBuilder::new().build();
-                    assert_eq!(outer_struct.field_i32, 1);
-                }
-            }
-
-            #[test]
-            fn can_access_public_struct_from_outside_module() {
-                let inner_struct = inner::InnerStructBuilder::new().build();
-                assert_eq!(inner_struct.field_i32, 1);
-            }
-
-            // The following causes a compilation failure if uncommented
-            // #[test]
-            // fn cannot_access_private_struct() {
-            //     let my_struct = inner::MyStructBuilder::new().build();
-            //     assert_eq!(my_struct.field_i32, 0);
-            // }
-        }
-    }
+    macro_tests!(module_private, []);
+    macro_tests!(public, [pub]);
 }
