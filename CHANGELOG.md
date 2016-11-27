@@ -1,4 +1,4 @@
-## 0.5.1 (unreleased)
+## 0.5.1 (2016-11-27)
 
 * Fixed a missing comma in parse struct
 
