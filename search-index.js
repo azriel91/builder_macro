@@ -1,0 +1,3 @@
+var searchIndex = {};
+searchIndex["builder_macro"] = {"doc":"This crate contains two macros to declare a struct and a corresponding builder.","items":[[14,"declare_structs","builder_macro","Declares the type struct and its corresponding builder struct.",null,null],[14,"data_struct","","Macro to declare a struct and a corresponding builder that returns a `Result&lt;T, &amp;&#39;static str&gt;`.\nSee [the module documentation](index.html) for more.",null,null],[14,"object_struct","","Macro to declare a struct and a corresponding builder that returns a `Result&lt;T, &amp;&#39;static str&gt;`.\nSee [the module documentation](index.html) for more.",null,null]],"paths":[]};
+initSearch(searchIndex);

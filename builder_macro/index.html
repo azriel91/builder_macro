@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `builder_macro` crate.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, builder_macro">
+
+    <title>builder_macro - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'></p><script>window.sidebarCurrent = {name: 'builder_macro', ty: 'mod', relpath: '../'};</script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content mod">
+<h1 class='fqn'><span class='in-band'>Crate <a class='mod' href=''>builder_macro</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-0' class='srclink' href='../src/builder_macro/src/lib.rs.html#1-913' title='goto source code'>[src]</a></span></h1>
+<div class='docblock'><p>This crate contains two macros to declare a struct and a corresponding builder.</p>
+
+<ul>
+<li><code>data_struct!</code>: The builder returns a <code>Result&lt;StructName, &amp;&#39;static str&gt;</code></li>
+<li><code>object_struct!</code>: The builder returns the declared <code>StructName</code></li>
+</ul>
+
+<p>The macro is inspired from <a href="http://jadpole.github.io/rust/builder-macro">jadpole/builder-macro</a>, and is designed to remove duplication of
+field declaration, as well as generating appropriate setter methods.</p>
+
+<h1 id='background' class='section-header'><a href='#background'>Background</a></h1>
+<p><em>For usage, please skip ahead to the <a href="#usage">Usage</a> section.</em></p>
+
+<p>There are two kinds of structs that this crate aims to support:</p>
+
+<ul>
+<li>Data structs: Parameter values are only known at runtime, and failure to build should be
+            handled by the application.</li>
+<li>Object structs: Parameter values are largely known at compile time, and failure to build means
+              the application no longer works, and should panic.</li>
+</ul>
+
+<p>For data structs, returning a <code>Result</code> allows the caller to handle the failure gracefully.
+For object structs, any <code>panic!</code>s should be caught by the developer before release. By removing
+the intermediary <code>Result</code>, the developer also no longer needs to call <code>unwrap()</code>, which makes
+the code <em>that</em> much more concise.</p>
+
+<h1 id='usage' class='section-header'><a href='#usage'>Usage</a></h1>
+<p>Specify the dependency in your crate&#39;s <code>Cargo.toml</code>:</p>
+
+<pre><code class="language-toml">[dependencies]
+builder_macro = &quot;0.5.0&quot;
+</code></pre>
+
+<p>Include the macro inside your crate&#39;s <code>lib.rs</code> or <code>main.rs</code>.</p>
+
+<pre class='rust rust-example-rendered'>
+<span class='attribute'>#[<span class='ident'>macro_use</span>]</span>
+<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>builder_macro</span>;<a class='test-arrow' target='_blank' href=''>Run</a></pre>
+
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<p><em><strong>Disclaimer:</strong> The examples use the <code>data_struct!</code> macro. They are equally valid for the
+<code>object_struct!</code> macro, the difference being the return type is the struct itself and not a
+<code>Result</code>.</em></p>
+
+<h2 id='non-consuming-builder' class='section-header'><a href='#non-consuming-builder'>Non-consuming Builder</a></h2>
+<p>The simplest usage of the builder macro to generate a <a href="https://doc.rust-lang.org/style/ownership/builders.html#non-consuming-builders-preferred">non-consuming builder</a> is:</p>
+
+<pre class='rust rust-example-rendered'>
+<span class='macro'>data_struct</span><span class='macro'>!</span>(<span class='ident'>ItemBuilder</span> <span class='op'>-&gt;</span> <span class='ident'>Item</span> {
+    <span class='ident'>required_field</span>: <span class='ident'>i32</span>,
+    <span class='ident'>defaulted_field</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span> <span class='op'>=</span> <span class='string'>&quot;abc&quot;</span>,
+});
+
+<span class='kw'>let</span> <span class='ident'>item</span> <span class='op'>=</span> <span class='ident'>ItemBuilder</span>::<span class='ident'>new</span>(<span class='number'>123</span>).<span class='ident'>build</span>().<span class='ident'>unwrap</span>();
+<span class='kw'>let</span> <span class='ident'>another</span> <span class='op'>=</span> <span class='ident'>ItemBuilder</span>::<span class='ident'>new</span>(<span class='number'>456</span>).<span class='ident'>defaulted_field</span>(<span class='string'>&quot;def&quot;</span>).<span class='ident'>build</span>().<span class='ident'>unwrap</span>();
+
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='number'>123</span>, <span class='ident'>item</span>.<span class='ident'>required_field</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='string'>&quot;abc&quot;</span>, <span class='ident'>item</span>.<span class='ident'>defaulted_field</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='number'>456</span>, <span class='ident'>another</span>.<span class='ident'>required_field</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='string'>&quot;def&quot;</span>, <span class='ident'>another</span>.<span class='ident'>defaulted_field</span>);<a class='test-arrow' target='_blank' href=''>Run</a></pre>
+
+<p>The generated code functions as follows:</p>
+
+<pre class='rust rust-example-rendered'>
+<span class='kw'>struct</span> <span class='ident'>Item</span> {
+    <span class='ident'>required_field</span>: <span class='ident'>i32</span>,
+    <span class='ident'>defaulted_field</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>,
+}
+
+<span class='doccomment'>/// Auto-generated builder</span>
+<span class='kw'>struct</span> <span class='ident'>ItemBuilder</span> {
+    <span class='ident'>required_field</span>: <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>i32</span><span class='op'>&gt;</span>,
+    <span class='ident'>defaulted_field</span>: <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span><span class='op'>&gt;</span>,
+}
+
+<span class='kw'>impl</span> <span class='ident'>ItemBuilder</span> {
+    <span class='doccomment'>/// Construct the builder</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='ident'>required_field</span>: <span class='ident'>i32</span>) <span class='op'>-&gt;</span> <span class='ident'>ItemBuilder</span> {
+        <span class='ident'>ItemBuilder</span> { <span class='ident'>required_field</span>: <span class='prelude-val'>Some</span>(<span class='ident'>required_field</span>), <span class='ident'>defaulted_field</span>: <span class='prelude-val'>Some</span>(<span class='string'>&quot;abc&quot;</span>), }
+    }
+
+    <span class='doccomment'>/// Build the struct</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>build</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>Item</span>, <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span><span class='op'>&gt;</span> {
+        <span class='kw'>let</span> <span class='ident'>required_field</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>required_field</span>.<span class='ident'>clone</span>().<span class='ident'>ok_or</span>(
+            <span class='macro'>concat</span><span class='macro'>!</span>(<span class='string'>&quot;Must pass argument for field: &#39;&quot;</span>, <span class='macro'>stringify</span><span class='macro'>!</span>(<span class='ident'>required_field</span>), <span class='string'>&quot;&#39;&quot;</span>))?;
+        <span class='kw'>let</span> <span class='ident'>defaulted_field</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>defaulted_field</span>.<span class='ident'>clone</span>().<span class='ident'>ok_or</span>(
+            <span class='macro'>concat</span><span class='macro'>!</span>(<span class='string'>&quot;Must pass argument for field: &#39;&quot;</span>, <span class='macro'>stringify</span><span class='macro'>!</span>(<span class='ident'>defaulted_field</span>), <span class='string'>&quot;&#39;&quot;</span>))?;
+
+        <span class='prelude-val'>Ok</span>(<span class='ident'>Item</span> { <span class='ident'>required_field</span>: <span class='ident'>required_field</span>, <span class='ident'>defaulted_field</span>: <span class='ident'>defaulted_field</span> })
+    }
+
+    <span class='attribute'>#[<span class='ident'>allow</span>(<span class='ident'>dead_code</span>)]</span>
+    <span class='doccomment'>/// Auto-generated setter</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>defaulted_field</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>defaulted_field</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>Self</span> {
+        <span class='self'>self</span>.<span class='ident'>defaulted_field</span> <span class='op'>=</span> <span class='prelude-val'>Some</span>(<span class='ident'>defaulted_field</span>);
+        <span class='self'>self</span>
+    }
+}<a class='test-arrow' target='_blank' href=''>Run</a></pre>
+
+<p>To generate public structs and builders, see <a href="#visibility">visbility</a>.</p>
+
+<h2 id='consuming-builder' class='section-header'><a href='#consuming-builder'>Consuming Builder</a></h2>
+<p>When the generated struct should own trait objects, they cannot be cloned, and so the builder
+must transfer ownership to the constructed instance.</p>
+
+<p>To generate a <a href="https://doc.rust-lang.org/style/ownership/builders.html#consuming-builders">consuming builder</a>, instead of using <code>-&gt;</code>, use <code>=&gt;</code> between the builder name
+and the target struct name.</p>
+
+<pre class='rust rust-example-rendered'>
+<span class='kw'>trait</span> <span class='ident'>Magic</span> {
+    <span class='kw'>fn</span> <span class='ident'>abracadabra</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>i32</span>;
+}
+<span class='kw'>struct</span> <span class='ident'>Dust</span> {
+    <span class='ident'>value</span>: <span class='ident'>i32</span>,
+}
+<span class='kw'>impl</span> <span class='ident'>Magic</span> <span class='kw'>for</span> <span class='ident'>Dust</span> {
+    <span class='kw'>fn</span> <span class='ident'>abracadabra</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>i32</span> {
+        <span class='self'>self</span>.<span class='ident'>value</span>
+    }
+}
+
+<span class='comment'>// Note: we use =&gt; instead of -&gt; for the consuming variant of the builder</span>
+<span class='macro'>data_struct</span><span class='macro'>!</span>(<span class='ident'>MyStructBuilder</span> <span class='op'>=&gt;</span> <span class='ident'>MyStruct</span> {
+    <span class='ident'>field_trait</span>: <span class='ident'>Box</span><span class='op'>&lt;</span><span class='ident'>Magic</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='ident'>Box</span>::<span class='ident'>new</span>(<span class='ident'>Dust</span> { <span class='ident'>value</span>: <span class='number'>1</span> }),
+    <span class='ident'>field_vec</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>Box</span><span class='op'>&lt;</span><span class='ident'>Magic</span><span class='op'>&gt;&gt;</span> <span class='op'>=</span> <span class='macro'>vec</span><span class='macro'>!</span>[<span class='ident'>Box</span>::<span class='ident'>new</span>(<span class='ident'>Dust</span> { <span class='ident'>value</span>: <span class='number'>2</span> })],
+});
+
+<span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>my_struct</span> <span class='op'>=</span> <span class='ident'>MyStructBuilder</span>::<span class='ident'>new</span>().<span class='ident'>build</span>().<span class='ident'>unwrap</span>();
+
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>my_struct</span>.<span class='ident'>field_trait</span>.<span class='ident'>abracadabra</span>(), <span class='number'>1</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>my_struct</span>.<span class='ident'>field_vec</span>[<span class='number'>0</span>].<span class='ident'>abracadabra</span>(), <span class='number'>2</span>);<a class='test-arrow' target='_blank' href=''>Run</a></pre>
+
+<h2 id='visibility' class='section-header'><a href='#visibility'>Visibility</a></h2>
+<p>Generate a builder and struct with module private visibility:</p>
+
+<pre class='rust rust-example-rendered'>
+<span class='macro'>data_struct</span><span class='macro'>!</span>(<span class='ident'>MyStructBuilder</span> <span class='op'>-&gt;</span> <span class='ident'>MyStruct</span> {
+    <span class='ident'>field_i32</span>: <span class='ident'>i32</span> <span class='op'>=</span> <span class='number'>123</span>,
+    <span class='ident'>field_str</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span> <span class='op'>=</span> <span class='string'>&quot;abc&quot;</span>,
+});
+
+<span class='kw'>let</span> <span class='ident'>my_struct</span> <span class='op'>=</span> <span class='ident'>MyStructBuilder</span>::<span class='ident'>new</span>()
+    .<span class='ident'>field_i32</span>(<span class='number'>456</span>)
+    .<span class='ident'>build</span>()
+    .<span class='ident'>unwrap</span>();
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>my_struct</span>.<span class='ident'>field_i32</span>, <span class='number'>456</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>my_struct</span>.<span class='ident'>field_str</span>, <span class='string'>&quot;abc&quot;</span>); <span class='comment'>// uses default</span><a class='test-arrow' target='_blank' href=''>Run</a></pre>
+
+<p>Generate a builder and struct with public visibility:</p>
+
+<pre class='rust rust-example-rendered'>
+<span class='kw'>mod</span> <span class='ident'>inner</span> {
+    <span class='macro'>data_struct</span><span class='macro'>!</span>(<span class='kw'>pub</span> <span class='ident'>MyStructBuilder</span> <span class='op'>-&gt;</span> <span class='ident'>MyStruct</span> {
+        <span class='kw'>pub</span> <span class='ident'>field_i32</span>: <span class='ident'>i32</span> <span class='op'>=</span> <span class='number'>123</span>,
+        <span class='ident'>field_str</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span> <span class='op'>=</span> <span class='string'>&quot;abc&quot;</span>,
+    });
+}
+
+<span class='kw'>let</span> <span class='ident'>my_struct</span> <span class='op'>=</span> <span class='ident'>inner</span>::<span class='ident'>MyStructBuilder</span>::<span class='ident'>new</span>()
+    .<span class='ident'>field_i32</span>(<span class='number'>456</span>)
+    .<span class='ident'>build</span>()
+    .<span class='ident'>unwrap</span>();
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>my_struct</span>.<span class='ident'>field_i32</span>, <span class='number'>456</span>);
+
+<span class='comment'>// The next line will fail compilation if uncommented as field_str is private</span>
+<span class='comment'>// assert_eq!(my_struct.field_str, &quot;abc&quot;);</span><a class='test-arrow' target='_blank' href=''>Run</a></pre>
+
+<h2 id='assertions' class='section-header'><a href='#assertions'>Assertions</a></h2>
+<p>You may specify assertions after field declarations inside an <code>assertions: { ... }</code> block.</p>
+
+<p>If an assertion fails, the <code>build()</code> method will return an <code>Err(...)</code>.</p>
+
+<pre class='rust rust-example-rendered'>
+<span class='macro'>data_struct</span><span class='macro'>!</span> {
+    <span class='kw'>pub</span> <span class='ident'>BuilderName</span> <span class='op'>-&gt;</span> <span class='ident'>StructName</span> {
+        <span class='attribute'>#[<span class='ident'>allow</span>(<span class='ident'>dead_code</span>)]</span>
+        <span class='ident'>a_private_field</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>,
+        <span class='doccomment'>/// a_field is an i32 which must be between 0 and 100 inclusive</span>
+        <span class='kw'>pub</span> <span class='ident'>a_field</span>: <span class='ident'>i32</span> <span class='op'>=</span> <span class='number'>50</span>,
+    }, <span class='ident'>assertions</span>: {
+        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>a_field</span> <span class='op'>&gt;=</span> <span class='number'>0</span>);
+        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>a_field</span> <span class='op'>&lt;=</span> <span class='number'>100</span>);
+        <span class='comment'>// Yes you can assert on private fields</span>
+        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='op'>!</span><span class='ident'>a_private_field</span>.<span class='ident'>is_empty</span>());
+    }
+}
+
+<span class='kw'>let</span> <span class='ident'>result_1</span> <span class='op'>=</span> <span class='ident'>BuilderName</span>::<span class='ident'>new</span>(<span class='string'>&quot;non-empty string&quot;</span>).<span class='ident'>build</span>();
+<span class='kw'>let</span> <span class='ident'>result_2</span> <span class='op'>=</span> <span class='ident'>BuilderName</span>::<span class='ident'>new</span>(<span class='string'>&quot;&quot;</span>).<span class='ident'>build</span>();
+
+<span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>result_1</span>.<span class='ident'>is_ok</span>());
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>result_2</span>.<span class='ident'>err</span>(),
+           <span class='prelude-val'>Some</span>(<span class='string'>&quot;assertion failed: &#39;assert!(! a_private_field . is_empty (  ))&#39;&quot;</span>));<a class='test-arrow' target='_blank' href=''>Run</a></pre>
+
+<h2 id='full-usage-format' class='section-header'><a href='#full-usage-format'>Full Usage Format</a></h2>
+<p>The full macro usage format is:</p>
+
+<pre class='rust rust-example-rendered'>
+<span class='comment'>// We declare the builder insider a module simply to demonstrate scope</span>
+<span class='kw'>mod</span> <span class='ident'>inner</span> {
+    <span class='macro'>data_struct</span><span class='macro'>!</span> {
+        <span class='doccomment'>/// StructName is an example struct.</span>
+        <span class='doccomment'>/// These docs are copied over to the generated struct.</span>
+        <span class='kw'>pub</span> <span class='ident'>BuilderName</span> <span class='op'>-&gt;</span> <span class='ident'>StructName</span> {
+            <span class='comment'>// meta attributes are copied over to the struct&#39;s fields</span>
+            <span class='attribute'>#[<span class='ident'>allow</span>(<span class='ident'>dead_code</span>)]</span>
+            <span class='ident'>a_private_field</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>,
+
+            <span class='doccomment'>/// a_field is an i32 which must be between 0 and 100 inclusive</span>
+            <span class='kw'>pub</span> <span class='ident'>a_field</span>: <span class='ident'>i32</span> <span class='op'>=</span> <span class='number'>50</span>,
+        }, <span class='ident'>assertions</span>: {
+            <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>a_field</span> <span class='op'>&gt;=</span> <span class='number'>0</span>);
+            <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>a_field</span> <span class='op'>&lt;=</span> <span class='number'>100</span>);
+            <span class='comment'>// Yes you can assert on private fields</span>
+            <span class='macro'>assert</span><span class='macro'>!</span>(<span class='op'>!</span><span class='ident'>a_private_field</span>.<span class='ident'>is_empty</span>());
+        }
+    }
+}
+
+<span class='kw'>let</span> <span class='ident'>my_struct</span> <span class='op'>=</span> <span class='ident'>inner</span>::<span class='ident'>BuilderName</span>::<span class='ident'>new</span>(<span class='string'>&quot;a_private_field must be non-empty&quot;</span>)
+    .<span class='ident'>build</span>()
+    .<span class='ident'>unwrap</span>();
+
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='number'>50</span>, <span class='ident'>my_struct</span>.<span class='ident'>a_field</span>);<a class='test-arrow' target='_blank' href=''>Run</a></pre>
+</div><h2 id='macros' class='section-header'><a href="#macros">Macros</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class='macro' href='macro.data_struct.html'
+                                  title='builder_macro::data_struct'>data_struct</a></td>
+                           <td class='docblock-short'>
+                                <p>Macro to declare a struct and a corresponding builder that returns a <code>Result&lt;T, &amp;&#39;static str&gt;</code>.
+See <a href="index.html">the module documentation</a> for more.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='macro' href='macro.declare_structs.html'
+                                  title='builder_macro::declare_structs'>declare_structs</a></td>
+                           <td class='docblock-short'>
+                                <p>Declares the type struct and its corresponding builder struct.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='macro' href='macro.object_struct.html'
+                                  title='builder_macro::object_struct'>object_struct</a></td>
+                           <td class='docblock-short'>
+                                <p>Macro to declare a struct and a corresponding builder that returns a <code>Result&lt;T, &amp;&#39;static str&gt;</code>.
+See <a href="index.html">the module documentation</a> for more.</p>
+                           </td>
+                       </tr></table></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "builder_macro";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../jquery.js"></script>
+    <script src="../main.js"></script>
+    
+    <script defer src="../search-index.js"></script>
+</body>
+</html>
